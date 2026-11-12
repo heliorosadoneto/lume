@@ -32,10 +32,17 @@ class TocEntry {
   final int block, depth;
 }
 
+enum BookFormat { epub, pdf }
+
 class BookMeta {
-  BookMeta({required this.id, required this.title, required this.author, required this.path, this.cover});
+  BookMeta(
+      {required this.id, required this.title, required this.author, required this.path, this.cover, this.format = BookFormat.epub});
   final String id, title, author, path;
-  final Uint8List? cover;
+  final BookFormat format;
+
+  /// No PDF a capa é gerada depois (primeira página), por isso pode mudar.
+  Uint8List? cover;
+  bool get isPdf => format == BookFormat.pdf;
 }
 
 class Book {

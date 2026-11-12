@@ -1,14 +1,11 @@
-import 'dart:io';
-
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 import '../library.dart';
 import '../store.dart';
 import '../theme.dart';
 import '../widgets.dart';
 import 'appearance.dart';
+import 'folder_import.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key, required this.library});
@@ -21,26 +18,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Library get lib => widget.library;
   ReaderSettings rs = Store.settings;
 
-  /// No Android 11+ ler EPUBs de uma pasta qualquer exige "Acesso a todos os arquivos".
-  Future<bool> _ensurePermission() async {
-    if (!Platform.isAndroid) return true;
-    if (await Permission.manageExternalStorage.isGranted || await Permission.storage.isGranted) return true;
-    final r = await Permission.manageExternalStorage.request();
-    if (r.isGranted) return true;
-    return (await Permission.storage.request()).isGranted;
-  }
-
-  Future<void> _chooseFolder() async {
-    final messenger = ScaffoldMessenger.of(context);
-    if (!await _ensurePermission()) {
-      messenger.showSnackBar(const SnackBar(content: Text('Sem permissão para ler a pasta. Libere o acesso aos arquivos.')));
-      return;
-    }
-    final dir = await FilePicker.getDirectoryPath(dialogTitle: 'Pasta de livros', initialDirectory: lib.folder);
-    if (dir == null) return;
-    await lib.setFolder(dir);
-    messenger.showSnackBar(SnackBar(content: Text('${lib.books.where((b) => b.source == BookSource.folder).length} livros encontrados na pasta')));
-  }
+  Future<void> _chooseFolder() => chooseFolder(context, lib);
 
   @override
   Widget build(BuildContext context) {
@@ -69,13 +47,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Text('Pasta de livros', style: Lume.s(16.5, w: 650)),
                         const SizedBox(height: 3),
-                        Text(f ?? 'Nenhuma pasta escolhida', style: Lume.s(14, color: f == null ? Lume.muted : Lume.ink, h: 1.3)),
+                        Text(f == null ? 'Nenhuma pasta escolhida' : friendlyPath(f), style: Lume.s(14, color: f == null ? Lume.muted : Lume.ink, h: 1.3)),
                         if (f != null) ...[
                           const SizedBox(height: 4),
                           Text(
                             lib.scanning
                                 ? 'Procurando livros…'
-                                : '$inFolder ${inFolder == 1 ? 'livro EPUB encontrado' : 'livros EPUB encontrados'}'
+                                : '$inFolder ${inFolder == 1 ? 'livro encontrado' : 'livros encontrados'} (PDF e EPUB)'
                                     '${lib.failed.isEmpty ? '' : ' · ${lib.failed.length} com erro'}',
                             style: Lume.s(13.5, color: Lume.accent, w: 600),
                           ),
@@ -113,15 +91,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ListTile(
                   contentPadding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
                   leading: const Icon(Icons.manage_search_rounded, color: Lume.ink),
-                  title: const Text('Procurar livros agora'),
-                  subtitle: const Text('Lê a pasta e as subpastas de novo'),
-                  onTap: lib.load,
+                  title: const Text('Atualizar pasta'),
+                  subtitle: const Text('Lê a pasta e as subpastas de novo e pega os livros novos'),
+                  onTap: lib.folder == null ? null : () => rescanFolder(context, lib),
                 ),
               ]),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(4, 10, 4, 0),
-              child: Text('Nesta versão o Lume lê arquivos EPUB. PDF chega numa próxima versão.',
+              child: Text('O Lume lê EPUB (texto que se ajusta à tela) e PDF (páginas como no original, com zoom). Os livros da pasta não são copiados: ficam onde estão.',
                   style: Lume.s(13.5, color: Lume.muted)),
             ),
             _label('Leitura'),
@@ -149,7 +127,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Column(children: [
                 ListTile(
                   leading: const LumeMark(size: 34),
-                  title: const Text('Lume 0.1 · protótipo'),
+                  title: const Text('Lume 1.1'),
                   subtitle: const Text('Leitura offline, sem conta e sem anúncios'),
                 ),
                 const Divider(),
@@ -157,6 +135,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   leading: Icon(Icons.menu_book_outlined, color: Lume.ink),
                   title: Text('Livros de exemplo'),
                   subtitle: Text('Machado de Assis e José de Alencar, em domínio público, via Project Gutenberg (gutenberg.org)'),
+                ),
+                const Divider(),
+                const ListTile(
+                  leading: Icon(Icons.picture_as_pdf_outlined, color: Lume.ink),
+                  title: Text('PDF'),
+                  subtitle: Text('Páginas desenhadas pelo PDFium (pacote pdfrx, licença MIT), direto no celular'),
                 ),
                 const Divider(),
                 const ListTile(

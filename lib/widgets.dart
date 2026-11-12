@@ -7,6 +7,15 @@ import 'theme.dart';
 String fmtDate(DateTime d) =>
     '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
 
+/// Caminho mais legível: "/storage/emulated/0/Livros" → "Armazenamento interno/Livros".
+String friendlyPath(String path) {
+  const internal = '/storage/emulated/0';
+  final i = path.indexOf(internal);
+  if (i < 0) return path;
+  final rest = path.substring(i + internal.length);
+  return 'Armazenamento interno${rest.isEmpty ? '' : rest}';
+}
+
 String pct(double v) => '${(v * 100).clamp(0, 100).round()}%';
 
 /// Capa do livro; sem imagem, desenha uma capa tipográfica no tom do app.

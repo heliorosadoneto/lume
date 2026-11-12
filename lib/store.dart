@@ -117,6 +117,18 @@ class Store {
 
   static set settings(ReaderSettings s) => _p.setString('settings', jsonEncode(s.toJson()));
 
+  /// Número de páginas de um PDF (conhecido depois de gerar a capa ou abrir).
+  static int? pages(String book) => _p.getInt('pages:$book');
+  static void setPages(String book, int n) => _p.setInt('pages:$book', n);
+
+  /// Leitor de PDF: rolagem contínua (false) ou página a página (true).
+  static bool get pdfPaged => _p.getBool('pdfPaged') ?? false;
+  static set pdfPaged(bool v) => _p.setBool('pdfPaged', v);
+
+  /// Leitor de PDF: mostra as cores originais da página, sem o tom do tema.
+  static bool get pdfOriginal => _p.getBool('pdfOriginal') ?? false;
+  static set pdfOriginal(bool v) => _p.setBool('pdfOriginal', v);
+
   static String? get folder => _p.getString('folder');
   static set folder(String? f) => f == null ? _p.remove('folder') : _p.setString('folder', f);
 

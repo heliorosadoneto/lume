@@ -114,7 +114,7 @@ void main() {
     await load('MaterialIcons', ['${Platform.environment['HOME']}/flutter/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf']);
 
     final tmp = Directory.systemTemp.createTempSync('lume');
-    folder = Directory(p.join(tmp.path, 'Livros'))..createSync();
+    folder = Directory(p.join(tmp.path, 'storage', 'emulated', '0', 'Livros'))..createSync(recursive: true);
     importDir = Directory(p.join(tmp.path, 'importados'))..createSync();
     for (final f in Directory('demo_folder').listSync().whereType<File>()) {
       f.copySync(p.join(folder.path, p.basename(f.path)));
@@ -151,8 +151,8 @@ void main() {
     final lib = await library();
     await t.pumpWidget(wrap(SettingsScreen(library: lib)));
     await settle(t);
-    expect(find.text(folder.path), findsOneWidget);
-    expect(find.text('4 livros EPUB encontrados'), findsOneWidget);
+    expect(find.text('Armazenamento interno/Livros'), findsOneWidget);
+    expect(find.text('4 livros encontrados (PDF e EPUB)'), findsOneWidget);
     await snap('02_ajustes_pasta');
     await t.drag(find.byType(ListView).first, const Offset(0, -900));
     await settle(t);

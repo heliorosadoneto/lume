@@ -9,10 +9,15 @@ import '../theme.dart';
 import '../widgets.dart';
 import 'appearance.dart';
 import 'notes.dart';
+import 'pdf_reader.dart';
 
-/// Abre o livro (o EPUB é processado fora da thread de interface).
+/// Abre o livro: PDF no leitor de páginas; EPUB processado fora da thread de interface.
 Future<void> openBook(BuildContext context, BookMeta meta) async {
   final messenger = ScaffoldMessenger.of(context);
+  if (meta.isPdf) {
+    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => PdfReaderScreen(meta: meta)));
+    return;
+  }
   try {
     final book = await compute(Epub.parseFile, meta.path);
     if (!context.mounted) return;

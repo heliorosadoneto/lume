@@ -117,3 +117,19 @@ enum BookFont {
   const BookFont(this.label, this.family);
   final String label, family;
 }
+
+/// Filtro de cor para páginas de PDF: o branco do papel vira o fundo do tema e
+/// o preto da tinta vira a cor do texto do tema (no Preto, a página se inverte).
+ColorFilter? pdfPageFilter(PageTheme t) {
+  if (t == PageTheme.branco) return null;
+  double ch(Color c, int i) => [c.r, c.g, c.b][i] * 255;
+  final m = <double>[];
+  for (var i = 0; i < 3; i++) {
+    final ink = ch(t.ink, i), bg = ch(t.bg, i);
+    final row = [0.0, 0.0, 0.0, 0.0, ink];
+    row[i] = (bg - ink) / 255;
+    m.addAll(row);
+  }
+  m.addAll([0, 0, 0, 1, 0]);
+  return ColorFilter.matrix(m);
+}
