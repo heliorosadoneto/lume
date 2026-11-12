@@ -13,6 +13,13 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
+    // Bibliotecas nativas comprimidas no APK (libflutter, libapp e libpdfium):
+    // o APK arm64 fica abaixo de 25 MB para poder ser enviado como anexo.
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
     namespace = "com.helio.lume"
     // permission_handler (and similar plugins) need API 37; Flutter still defaults to 36.
     compileSdk = 37
