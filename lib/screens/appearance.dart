@@ -114,8 +114,9 @@ class AppearancePanel extends StatelessWidget {
 }
 
 class AppearanceSheet extends StatefulWidget {
-  const AppearanceSheet({super.key, required this.settings, required this.onChanged});
+  const AppearanceSheet({super.key, required this.settings, required this.onChanged, this.extra});
   final ReaderSettings settings;
+  final Widget? extra;
   final ValueChanged<ReaderSettings> onChanged;
   @override
   State<AppearanceSheet> createState() => _AppearanceSheetState();
@@ -128,6 +129,7 @@ class _AppearanceSheetState extends State<AppearanceSheet> {
           padding: const EdgeInsets.fromLTRB(22, 0, 22, 20),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('Aparência', style: Lume.s(22, w: 650, family: Lume.serif)),
+            ?widget.extra,
             AppearancePanel(
               settings: widget.settings,
               onChanged: (s) {

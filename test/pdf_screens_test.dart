@@ -13,7 +13,10 @@ import 'package:lume/library.dart';
 import 'package:lume/pdf.dart';
 import 'package:lume/screens/folder_import.dart';
 import 'package:lume/screens/library.dart';
+import 'package:lume/pdf_analysis.dart';
+import 'package:lume/screens/pdf_book.dart';
 import 'package:lume/screens/pdf_reader.dart';
+import 'package:lume/screens/reader.dart';
 import 'package:lume/store.dart';
 import 'package:lume/theme.dart';
 import 'package:path/path.dart' as p;
@@ -105,6 +108,7 @@ void main() {
     File('demo_folder/pdf/helena.pdf').copySync(p.join(down.path, 'Helena (1).pdf')); // repetido
     helena = PdfMeta.read(p.join(rom.path, 'helena.pdf'));
     esau = PdfMeta.read(p.join(rom.path, 'esau-e-jaco.pdf'));
+    PdfBookScreen.cacheDir = Directory(p.join(root.path, 'texto'));
     await resetPrefs();
   });
 
@@ -300,5 +304,80 @@ void main() {
     await t.tap(find.byKey(const ValueKey('pdftheme-preto')));
     await render(t, rounds: 1);
     expect(Store.settings.theme, PageTheme.preto);
+  });
+
+  testWidgets('Modo texto: padrão para PDF com texto, página sincronizada nos dois modos', (t) async {
+    phone(t);
+    await t.pumpWidget(wrap(PdfBookScreen(meta: helena, now: () => now)));
+    // primeira vez: extrai o texto (fora da thread da interface) com progresso
+    expect(find.text('Preparando o modo texto…'), findsOneWidget);
+    for (var i = 0; i < 20 && find.textContaining(' de 228').evaluate().isEmpty; i++) {
+      await render(t, rounds: 1);
+    }
+    expect(find.textContaining(RegExp(r'^Página \d+ de 228$')), findsOneWidget);
+    // (no teste, o PDFium só anda entre um pump e outro; a extração de verdade
+    // roda aqui e o leitor reabre lendo do cache)
+    await t.runAsync(() => PdfBookScreen.defaultAnalyzer.analyze(helena.path, helena.id));
+    await t.pumpWidget(wrap(PdfBookScreen(key: const ValueKey('again'), meta: helena, now: () => now)));
+    await render(t, rounds: 6);
+    expect(find.byType(ReaderScreen), findsOneWidget);
+    final a = await t.runAsync(() => PdfBookScreen.defaultAnalyzer.analyze(helena.path, helena.id));
+    final tid = PdfAnalysis.textId(helena.id);
+    // abriu no bloco do topo da página 42, onde a leitura estava
+    final blk = Store.pos(tid)!.block;
+    expect(blk, a!.reflow.blockForPage(42));
+    expect(find.textContaining('p. ${a.reflow.blockPage[blk]} de 228'), findsOneWidget);
+    await snap('27_pdf_modo_texto');
+
+    // lendo no modo texto: a posição do PDF acompanha
+    final st = t.state<ReaderScreenState>(find.byType(ReaderScreen));
+    final target = a.reflow.blockForPage(120);
+    st.jumpTo(target);
+    await render(t, rounds: 4);
+    expect(Store.pos(helena.id)!.block, a.reflow.blockPage[Store.pos(tid)!.block] - 1);
+    expect(Store.pos(helena.id)!.block, inInclusiveRange(118, 120));
+
+    // troca para a página original pela folha de aparência
+    await t.tap(find.byTooltip('Aparência'));
+    await render(t, rounds: 3);
+    expect(find.text('Modo texto'), findsOneWidget);
+    await snap('28_pdf_modo_texto_aparencia');
+    await t.tap(find.text('Página original'));
+    await render(t);
+    expect(Store.pdfMode(helena.id), 'pagina');
+    final pr = t.state<PdfReaderScreenState>(find.byType(PdfReaderScreen));
+    final page = Store.pos(helena.id)!.block + 1;
+    expect(pr.page, page);
+
+    // avança no modo página e volta para o modo texto: continua da página nova
+    await pr.goTo(150, animate: false);
+    await render(t, rounds: 4);
+    await t.tap(find.byTooltip('Aparência'));
+    await render(t, rounds: 3);
+    await t.tap(find.text('Modo texto'));
+    await render(t, rounds: 8);
+    expect(find.byType(ReaderScreen), findsOneWidget);
+    expect(Store.pdfMode(helena.id), 'texto');
+    expect(Store.pos(tid)!.block, a.reflow.blockForPage(150));
+  });
+
+  testWidgets('PDF escaneado (sem texto): abre na página original e explica', (t) async {
+    phone(t);
+    final scan = PdfMeta.read('test/fixtures/escaneado.pdf');
+    await t.pumpWidget(wrap(PdfBookScreen(meta: scan, now: () => now)));
+    for (var i = 0; i < 40 && find.byType(PdfReaderScreen).evaluate().isEmpty; i++) {
+      await render(t, rounds: 1);
+    }
+    await render(t, rounds: 4);
+    expect(find.byType(PdfReaderScreen), findsOneWidget);
+    expect(find.textContaining('escaneado'), findsOneWidget);
+    await t.pump(const Duration(seconds: 8));
+    await t.tap(find.byTooltip('Aparência'));
+    await render(t, rounds: 3);
+    expect(find.textContaining('Este PDF é escaneado'), findsOneWidget);
+    // o botão do modo texto fica desligado
+    await t.tap(find.text('Modo texto'));
+    await render(t, rounds: 2);
+    expect(find.byType(PdfReaderScreen), findsOneWidget);
   });
 }

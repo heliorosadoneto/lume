@@ -9,6 +9,7 @@ import 'package:pdfrx/pdfrx.dart';
 
 import 'library.dart';
 import 'screens/library.dart';
+import 'screens/pdf_book.dart';
 import 'store.dart';
 import 'theme.dart';
 
@@ -17,8 +18,9 @@ Future<void> main() async {
   await Store.init();
   await pdfrxFlutterInitialize(); // PDFium local (sem internet)
   final docs = await getApplicationDocumentsDirectory();
-  final library = Library(Directory(p.join(docs.path, 'Lume', 'livros')),
-      coversDir: Directory(p.join((await getApplicationSupportDirectory()).path, 'capas')));
+  final support = (await getApplicationSupportDirectory()).path;
+  PdfBookScreen.cacheDir = Directory(p.join(support, 'texto'));
+  final library = Library(Directory(p.join(docs.path, 'Lume', 'livros')), coversDir: Directory(p.join(support, 'capas')));
   await library.seedIfNeeded(rootBundle);
   runApp(LumeApp(library: library));
   await library.load();

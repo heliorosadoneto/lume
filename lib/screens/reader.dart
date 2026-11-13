@@ -9,13 +9,13 @@ import '../theme.dart';
 import '../widgets.dart';
 import 'appearance.dart';
 import 'notes.dart';
-import 'pdf_reader.dart';
+import 'pdf_book.dart';
 
-/// Abre o livro: PDF no leitor de páginas; EPUB processado fora da thread de interface.
+/// Abre o livro: PDF no modo texto ou de páginas; EPUB processado fora da thread de interface.
 Future<void> openBook(BuildContext context, BookMeta meta) async {
   final messenger = ScaffoldMessenger.of(context);
   if (meta.isPdf) {
-    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => PdfReaderScreen(meta: meta)));
+    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => PdfBookScreen(meta: meta)));
     return;
   }
   try {
@@ -28,9 +28,19 @@ Future<void> openBook(BuildContext context, BookMeta meta) async {
 }
 
 class ReaderScreen extends StatefulWidget {
-  const ReaderScreen({super.key, required this.book, this.now});
+  const ReaderScreen(
+      {super.key, required this.book, this.now, this.onPosition, this.appearanceExtra, this.locationLabel});
   final Book book;
   final DateTime Function()? now;
+
+  /// Avisado a cada mudança de bloco (o modo texto do PDF sincroniza a página).
+  final void Function(int block, double percent)? onPosition;
+
+  /// Conteúdo extra no topo do painel de aparência (troca de modo do PDF).
+  final Widget Function(BuildContext sheetContext)? appearanceExtra;
+
+  /// Texto extra na barra de baixo, como "p. 42 de 273" no modo texto do PDF.
+  final String Function(int block)? locationLabel;
   @override
   State<ReaderScreen> createState() => ReaderScreenState();
 }
@@ -78,6 +88,7 @@ class ReaderScreenState extends State<ReaderScreen> {
     final bottom = positions.itemPositions.value.fold<int>(current, (m, p) => p.index > m ? p.index : m);
     final percent = bottom >= book.blocks.length - 1 ? 1.0 : book.progressAt(current);
     Store.savePos(book.meta.id, ReadingPos(current, align, percent, _now()));
+    widget.onPosition?.call(current, percent);
   }
 
   String get chapterTitle {
@@ -161,7 +172,8 @@ class ReaderScreenState extends State<ReaderScreen> {
       context: context,
       isScrollControlled: true,
       barrierColor: Colors.black12,
-      builder: (_) => AppearanceSheet(
+      builder: (sheet) => AppearanceSheet(
+        extra: widget.appearanceExtra?.call(sheet),
         settings: s,
         onChanged: (n) {
           setState(() => s = n);
@@ -257,7 +269,8 @@ class ReaderScreenState extends State<ReaderScreen> {
           ThinProgress(progress, height: 3, color: t.dark ? Lume.amber : Lume.accent, track: t.muted.withValues(alpha: .25)),
           const SizedBox(height: 8),
           Row(children: [
-            Text('${pct(progress)} do livro', style: Lume.s(13, color: t.muted, w: 500)),
+            Text('${pct(progress)} do livro${widget.locationLabel == null ? '' : ' · ${widget.locationLabel!(current)}'}',
+                style: Lume.s(13, color: t.muted, w: 500)),
             const Spacer(),
             Text(mins <= 1 ? 'Menos de 1 min no capítulo' : '$mins min restantes no capítulo',
                 style: Lume.s(13, color: t.muted)),

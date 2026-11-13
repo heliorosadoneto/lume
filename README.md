@@ -66,6 +66,14 @@ O Lume agora abre **PDF**. A página aparece como no original (o PDF é desenhad
 |---|---|---|
 | <img src="docs/screenshots/24_pdf_sumario.png" width="230" alt="Sumário do PDF"> | <img src="docs/screenshots/25_pdf_marcadores.png" width="230" alt="Marcadores do PDF"> | <img src="docs/screenshots/26_pdf_aparencia.png" width="230" alt="Aparência do PDF"> |
 
+### Modo texto para PDF
+
+Muitos PDFs (sobretudo os de livro feitos para papel carta ou A4) ficam com a letra miúda no celular. Quando o PDF tem texto selecionável, o Lume abre no **modo texto**: o texto do PDF é refeito em parágrafos (junta as linhas, desfaz a hifenização, tira cabeçalhos, rodapés e números de página e reconhece os títulos dos capítulos) e aparece no mesmo leitor dos EPUBs, com a fonte, o tamanho, o espaçamento, as margens e os temas que você escolher, além de destaques e notas. A posição é a mesma nos dois modos: trocar para a *Página original* (no painel de aparência) abre a página que você estava lendo, e vice-versa. O texto é extraído uma vez, fora da tela, com progresso, e fica guardado no aparelho. PDF escaneado (páginas que são só imagens) abre na página original, com um aviso. Na página original, as margens brancas são cortadas para o texto ocupar a largura da tela (dá para desligar).
+
+| Modo texto | Aparência com a troca de modo |
+|---|---|
+| <img src="docs/screenshots/27_pdf_modo_texto.png" width="230" alt="Modo texto do PDF"> | <img src="docs/screenshots/28_pdf_modo_texto_aparencia.png" width="230" alt="Troca entre modo texto e página original"> |
+
 ## Telas
 
 | Biblioteca | Pasta nos ajustes | Leitor (sépia) |
@@ -96,6 +104,7 @@ Há ainda o tema verde claro e a aba de marcadores (`docs/screenshots/06_leitor_
 - **Sumário.** Capítulos do livro, com o atual marcado e a porcentagem de cada um.
 - **Barra de progresso.** Mostra a % do livro e uma estimativa do tempo restante no capítulo.
 - **Leitor de PDF.** Página fiel ao original, sem internet. Rolagem contínua ou página a página (deslizar ou tocar nas bordas), zoom com pinça e toque duplo, barra para pular páginas, *Ir para a página*, sumário do próprio PDF, marcadores por página e a posição salva. Os temas sépia, verde claro e preto tingem a página (no preto ela se inverte); *Cores originais da página* desliga isso para fotos e mapas.
+- **Modo texto para PDF.** PDFs com texto abrem refeitos em parágrafos no leitor de EPUB (fonte, tamanho, temas, destaques e notas), com a posição sincronizada com a página original. Tabelas, fórmulas e imagens só aparecem na página original.
 
 Loja de livros e conta na nuvem ficam de fora.
 
@@ -119,6 +128,8 @@ O PDF é desenhado pelo [pdfrx](https://pub.dev/packages/pdfrx) (licença MIT), 
 lib/
   epub.dart       lê o EPUB (OPF, capítulos, capa, sumário)
   pdf.dart        metadados, identificador e capa do PDF
+  pdf_reflow.dart refaz parágrafos a partir das linhas do PDF (modo texto)
+  pdf_analysis.dart extrai o texto e as margens com o PDFium e guarda em cache
   library.dart    lê a pasta (e subpastas) com progresso e junta com os importados
   store.dart      guarda posição, destaques, marcadores e preferências
   screens/        biblioteca, leitores EPUB e PDF, pasta, caderno, aparência e ajustes

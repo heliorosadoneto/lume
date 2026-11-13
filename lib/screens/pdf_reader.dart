@@ -8,14 +8,26 @@ import 'package:flutter/services.dart';
 import 'package:pdfrx/pdfrx.dart';
 
 import '../epub.dart';
+import '../pdf_analysis.dart';
 import '../store.dart';
 import '../theme.dart';
 import '../widgets.dart';
 
 class PdfReaderScreen extends StatefulWidget {
-  const PdfReaderScreen({super.key, required this.meta, this.now});
+  const PdfReaderScreen({super.key, required this.meta, this.now, this.crops, this.onTextMode, this.textMode, this.notice});
   final BookMeta meta;
   final DateTime Function()? now;
+
+  /// Área com conteúdo de cada página (para cortar as margens brancas).
+  final List<PageCrop>? crops;
+
+  /// Troca para o modo texto. [textMode]: true = disponível, false = PDF sem
+  /// texto (escaneado), null = ainda analisando.
+  final VoidCallback? onTextMode;
+  final bool? textMode;
+
+  /// Aviso curto mostrado ao abrir (por exemplo: PDF escaneado).
+  final String? notice;
   @override
   State<PdfReaderScreen> createState() => PdfReaderScreenState();
 }
@@ -23,13 +35,16 @@ class PdfReaderScreen extends StatefulWidget {
 class PdfReaderScreenState extends State<PdfReaderScreen> {
   BookMeta get meta => widget.meta;
   late final PdfDocumentRef ref = PdfDocumentRefFile(meta.path);
-  final viewer = PdfViewerController();
+  var viewer = PdfViewerController();
   late PageController pager;
   final zoomer = TransformationController();
 
   late ReaderSettings s = Store.settings;
   bool paged = Store.pdfPaged;
   bool original = Store.pdfOriginal;
+  bool cropOn = Store.pdfCrop;
+  List<PageCrop>? get crops => cropOn ? widget.crops : null;
+  List<double> _contentTops = [];
   late List<Bookmark> bms = Store.bookmarks(meta.id);
   PdfDocument? doc;
 
@@ -49,6 +64,27 @@ class PdfReaderScreenState extends State<PdfReaderScreen> {
     pager = PageController(initialPage: page - 1);
     viewer.addListener(_onViewerZoom);
     zoomer.addListener(_onPagedZoom);
+    if (widget.notice != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(widget.notice!), duration: const Duration(seconds: 6)));
+      });
+    }
+  }
+
+  @override
+  void didUpdateWidget(PdfReaderScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if ((oldWidget.crops == null) != (widget.crops == null) && cropOn) _newViewer();
+  }
+
+  /// O leitor contínuo é recriado quando o corte muda (layout diferente);
+  /// cada PdfViewer novo precisa do seu próprio controlador.
+  void _newViewer() {
+    viewer.removeListener(_onViewerZoom);
+    viewer = PdfViewerController()..addListener(_onViewerZoom);
+    zoom = 1;
   }
 
   @override
@@ -113,8 +149,10 @@ class PdfReaderScreenState extends State<PdfReaderScreen> {
   Future<void> _alignTop(int n, Duration duration) async {
     if (!viewer.isReady) return;
     final r = viewer.layout.pageLayouts[n - 1];
+    final top = n - 1 < _contentTops.length ? _contentTops[n - 1] : r.top;
     final h = viewer.viewSize.height / viewer.currentZoom;
-    await viewer.goToArea(rect: Rect.fromLTWH(r.left, r.top - 6, r.width, h), anchor: PdfPageAnchor.top, duration: duration);
+    final w = viewer.layout.documentSize.width;
+    await viewer.goToArea(rect: Rect.fromLTWH(0, top - 6, w, h), anchor: PdfPageAnchor.top, duration: duration);
   }
 
   void resetZoom() {
@@ -168,9 +206,30 @@ class PdfReaderScreenState extends State<PdfReaderScreen> {
   Future<void> openAppearance() async {
     await showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       barrierColor: Colors.black12,
-      builder: (_) => StatefulBuilder(
+      builder: (sheet) => StatefulBuilder(
         builder: (context, set) => PdfAppearanceSheet(
+          modeSwitch: widget.textMode == null && widget.onTextMode == null
+              ? null
+              : PdfModeSwitch(
+                  text: false,
+                  available: widget.textMode,
+                  onChanged: (text) {
+                    if (!text) return;
+                    Navigator.pop(sheet);
+                    widget.onTextMode?.call();
+                  },
+                ),
+          crop: widget.crops == null ? null : cropOn,
+          onCrop: (v) {
+            set(() {});
+            setState(() {
+              cropOn = v;
+              _newViewer();
+            });
+            Store.pdfCrop = v;
+          },
           theme: s.theme,
           paged: paged,
           original: original,
@@ -230,15 +289,43 @@ class PdfReaderScreenState extends State<PdfReaderScreen> {
     );
   }
 
+  /// Páginas uma embaixo da outra, alinhadas pela área com texto: a largura do
+  /// conteúdo mais comum ocupa a tela (as margens laterais ficam de fora).
+  /// Página com conteúdo mais largo (capa, mapa) é reduzida para caber.
+  PdfPageLayout _croppedLayout(List<PdfPage> pages, PdfViewerParams params) {
+    final cs = crops!;
+    const m = 8.0, gap = 12.0;
+    PageCrop c(int i) => i < cs.length ? cs[i] : PageCrop.full;
+    final widths = [for (var i = 0; i < pages.length; i++) c(i).width * pages[i].width]..sort();
+    final docW = widths[((widths.length - 1) * .9).round()];
+    final rects = <Rect>[];
+    final tops = <double>[];
+    var y = m;
+    for (var i = 0; i < pages.length; i++) {
+      final pg = pages[i], cr = c(i);
+      final cw = cr.width * pg.width;
+      final k = cw > docW ? docW / cw : 1.0;
+      final left = m + (docW - cw * k) / 2 - cr.left * pg.width * k;
+      rects.add(Rect.fromLTWH(left, y, pg.width * k, pg.height * k));
+      tops.add(y + cr.top * pg.height * k);
+      y += pg.height * k + gap;
+    }
+    _contentTops = tops;
+    return PdfPageLayout(pageLayouts: rects, documentSize: Size(docW + 2 * m, y - gap + m));
+  }
+
   Widget _scrollView(PageTheme t) => PdfViewer(
         ref,
-        key: const ValueKey('pdf-scroll'),
+        key: ValueKey('pdf-scroll-${crops != null}-${viewer.hashCode}'),
         controller: viewer,
         params: PdfViewerParams(
           backgroundColor: t.bg,
-          margin: 14,
+          margin: crops != null ? 8 : 14,
+          layoutPages: crops != null ? _croppedLayout : null,
           pageImageColorFilter: filter,
-          pageDropShadow: BoxShadow(color: Colors.black.withValues(alpha: t.dark ? .5 : .14), blurRadius: 10, offset: const Offset(0, 3)),
+          pageDropShadow: crops != null
+              ? null
+              : BoxShadow(color: Colors.black.withValues(alpha: t.dark ? .5 : .14), blurRadius: 10, offset: const Offset(0, 3)),
           calculateInitialPageNumber: (d, c) => page.clamp(1, d.pages.length),
           onViewerReady: (d, c) {
             _ready(d);
@@ -281,7 +368,8 @@ class PdfReaderScreenState extends State<PdfReaderScreen> {
       );
 
   Widget _pagedPage(PageTheme t, PdfDocument d, int n) {
-    final pageWidget = Padding(
+    final cr = crops == null || n - 1 >= crops!.length ? null : crops![n - 1];
+    final pageWidget = cr != null ? _croppedPage(d, n, cr) : Padding(
       padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
       child: PdfPageView(
         document: d,
@@ -317,6 +405,50 @@ class PdfReaderScreenState extends State<PdfReaderScreen> {
         maxScale: 5,
         child: f == null ? pageWidget : ColorFiltered(colorFilter: f, child: pageWidget),
       ),
+    );
+  }
+
+  /// Só a área com conteúdo da página, do maior tamanho que couber na tela.
+  Widget _croppedPage(PdfDocument d, int n, PageCrop cr) {
+    final pg = d.pages[n - 1];
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
+      child: LayoutBuilder(builder: (context, c) {
+        final cw = cr.width * pg.width, ch = cr.height * pg.height;
+        final k = math.min(c.maxWidth / cw, c.maxHeight / ch);
+        return Center(
+          child: Container(
+            width: cw * k,
+            height: ch * k,
+            color: Colors.white,
+            child: ClipRect(
+              child: OverflowBox(
+                alignment: Alignment.topLeft,
+                minWidth: 0,
+                minHeight: 0,
+                maxWidth: double.infinity,
+                maxHeight: double.infinity,
+                child: Transform.translate(
+                  offset: Offset(-cr.left * pg.width * k, -cr.top * pg.height * k),
+                  child: SizedBox(
+                    width: pg.width * k,
+                    height: pg.height * k,
+                    child: PdfPageView(
+                      document: d,
+                      pageNumber: n,
+                      pageSizeCallback: (size, p, rot) {
+                        final sc = math.min(300 / 72, math.min(size.width / p.width, size.height / p.height) * 2);
+                        return Size(p.width * sc, p.height * sc);
+                      },
+                      decoration: const BoxDecoration(color: Colors.white),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      }),
     );
   }
 
@@ -456,17 +588,27 @@ class PdfAppearanceSheet extends StatelessWidget {
       required this.original,
       required this.onTheme,
       required this.onPaged,
-      required this.onOriginal});
+      required this.onOriginal,
+      this.modeSwitch,
+      this.crop,
+      this.onCrop});
   final PageTheme theme;
   final bool paged, original;
   final ValueChanged<PageTheme> onTheme;
   final ValueChanged<bool> onPaged, onOriginal;
+  final Widget? modeSwitch;
+
+  /// Corte das margens brancas; null esconde a opção.
+  final bool? crop;
+  final ValueChanged<bool>? onCrop;
 
   @override
-  Widget build(BuildContext context) => Padding(
+  Widget build(BuildContext context) => SafeArea(
+          child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text('Aparência do PDF', style: Lume.s(22, w: 650, family: Lume.serif)),
+          ?modeSwitch,
           const SizedBox(height: 4),
           Text('A página continua como no original; o tema muda o papel e a tinta.', style: Lume.s(14, color: Lume.muted)),
           const SizedBox(height: 18),
@@ -518,8 +660,68 @@ class PdfAppearanceSheet extends StatelessWidget {
             value: original,
             onChanged: onOriginal,
           ),
+          if (crop != null)
+            SwitchListTile(
+              key: const ValueKey('pdf-crop'),
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Cortar margens brancas'),
+              subtitle: const Text('A área com texto ocupa a largura da tela'),
+              value: crop!,
+              onChanged: onCrop,
+            ),
         ]),
-      );
+      ));
+}
+
+
+/// Troca entre o modo texto (o PDF refeito em parágrafos, com fonte e tamanho
+/// do Lume) e a página original. Fica no topo das duas folhas de aparência.
+class PdfModeSwitch extends StatelessWidget {
+  const PdfModeSwitch({super.key, required this.text, required this.available, required this.onChanged});
+
+  /// Modo atual: true = texto.
+  final bool text;
+
+  /// true = o PDF tem texto; false = escaneado; null = ainda analisando.
+  final bool? available;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(top: 12, bottom: 6),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: double.infinity,
+          child: SegmentedButton<bool>(
+            key: const ValueKey('pdf-text-mode'),
+            showSelectedIcon: false,
+            segments: [
+              ButtonSegment(
+                value: true,
+                enabled: available != false,
+                icon: const Icon(Icons.subject_rounded),
+                label: const Text('Modo texto'),
+              ),
+              const ButtonSegment(value: false, icon: Icon(Icons.picture_as_pdf_outlined), label: Text('Página original')),
+            ],
+            selected: {text},
+            onSelectionChanged: (v) => onChanged(v.first),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(switch ((text, available)) {
+          (true, _) =>
+            'O texto do PDF refeito em parágrafos: fonte, tamanho e margens como nos EPUBs. '
+                'Tabelas, fórmulas e imagens só aparecem na página original.',
+          (false, false) => 'Este PDF é escaneado (as páginas são imagens), então não há texto para o modo texto.',
+          (false, null) => 'O modo texto ainda está sendo preparado…',
+          _ => 'A página como no arquivo. O modo texto deixa a letra do tamanho que você quiser.',
+        }, style: Lume.s(13.5, color: Lume.muted, h: 1.35)),
+      ],
+    ),
+  );
 }
 
 /// Sumário do PDF (quando o arquivo tem) e marcadores.

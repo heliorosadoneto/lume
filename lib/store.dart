@@ -129,6 +129,15 @@ class Store {
   static bool get pdfOriginal => _p.getBool('pdfOriginal') ?? false;
   static set pdfOriginal(bool v) => _p.setBool('pdfOriginal', v);
 
+  /// Leitor de PDF: corta as margens brancas das páginas.
+  static bool get pdfCrop => _p.getBool('pdfCrop') ?? true;
+  static set pdfCrop(bool v) => _p.setBool('pdfCrop', v);
+
+  /// Modo do PDF: 'texto' (refeito em parágrafos) ou 'pagina' (original).
+  /// Sem escolha salva, PDFs com texto abrem no modo texto.
+  static String? pdfMode(String book) => _p.getString('pdfmode:$book');
+  static void setPdfMode(String book, String mode) => _p.setString('pdfmode:$book', mode);
+
   static String? get folder => _p.getString('folder');
   static set folder(String? f) => f == null ? _p.remove('folder') : _p.setString('folder', f);
 

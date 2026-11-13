@@ -1,5 +1,12 @@
 # Histórico de mudanças
 
+## Próxima versão — em aprovação (ainda sem APK)
+
+- Modo texto para PDF com texto selecionável: o texto é refeito em parágrafos (linhas juntas, hifenização desfeita, sem cabeçalhos, rodapés e números de página, capítulos reconhecidos) e lido no mesmo leitor dos EPUBs, com fonte, tamanho, espaçamento, margens, temas, destaques e notas. É o padrão para esses PDFs.
+- Troca entre “Modo texto” e “Página original” no painel de aparência, com a posição sincronizada entre os dois.
+- Extração fora da tela, com progresso, guardada em cache. PDF escaneado abre na página original com um aviso.
+- Página original: as margens brancas são cortadas e o texto ocupa a largura da tela (opção “Cortar margens brancas”); zoom com pinça continua.
+
 ## 1.1.0 — em aprovação (ainda sem APK)
 
 - Leitor de PDF (pdfrx/PDFium, offline): página fiel ao original, rolagem contínua ou página a página, zoom com pinça e toque duplo, barra de páginas, “Ir para a página”, sumário do PDF, marcadores e posição salva.
