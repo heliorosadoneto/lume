@@ -1,10 +1,12 @@
 # Histórico de mudanças
 
-## Próxima versão — 1.3.0, em aprovação (ainda sem APK)
+## 1.3.0 — 13 de novembro de 2026
 
 - Pasta do Lume criada na primeira abertura: Documentos/Lume ou, se o Android não deixar, Android/data/com.helio.lume/files/Livros (com explicação e botão “Usar Documentos/Lume”). Caminho em Ajustes e no topo da biblioteca. Livros importados antes são movidos para ela.
 - Botão “Importar” (e “+ → Importar livros”): escolhe vários EPUB, PDF ou TXT de uma vez e copia para a pasta do Lume, com progresso e resumo. Nome repetido vira “nome (2)”; arquivo idêntico (mesmo hash) é pulado.
-- A pasta do Lume é relida ao abrir e ao voltar para o app (com subpastas), então arquivos colocados pelo gerenciador de arquivos aparecem. A outra pasta continua opcional, lida sem cópia.
+- A pasta do Lume é relida ao abrir e ao voltar para o app (com subpastas), então arquivos colocados pelo gerenciador de arquivos aparecem.
+- Várias pastas: Ajustes → Pastas mostra a pasta do Lume (fixa) e quantas outras pastas você quiser, cada uma com caminho e número de livros. Adicionar pelo seletor de pastas, Remover só tira os livros da biblioteca (os arquivos ficam). A pasta escolhida na versão anterior entra na lista. Todas são lidas com subpastas, com o nome da pasta/subpasta em cada livro e sem repetidos entre pastas. Aviso na tela sobre o “Acesso a todos os arquivos” e as pastas que o seletor bloqueia no Android 11+ (Android/data, raiz de Downloads).
+- Apagar livros: toque longo entra no modo de seleção (marcas, contagem, selecionar todos, cancelar) e cada livro tem o menu ⋮ com Apagar…. O diálogo oferece “Tirar só da biblioteca” (o arquivo fica, não volta ao reler as pastas, Desfazer no aviso e Ajustes → Livros ocultos) ou “Apagar o arquivo também” (apaga do celular e limpa posição, destaques, notas, marcadores, capa e cache de texto do PDF; se o Android não deixar, explica na tela).
 - TXT: abre no leitor de texto, com UTF-8, UTF-16 (BOM) e Latin-1/Windows-1252 reconhecidos sozinhos, parágrafos, capítulos no sumário e sem o cabeçalho do Project Gutenberg. Filtro TXT na biblioteca.
 - Markdown (.md e .markdown): no Importar, nas pastas e no filtro MD; título do cabeçalho YAML, do primeiro # ou do nome do arquivo. Abre formatado no leitor de texto (títulos e sumário, negrito, itálico, listas, tarefas, citações, código em fonte monoespaçada, tabelas, linhas, imagens locais com aviso se faltarem), com destaques, notas e posição salva. Links internos saltam; externos abrem depois de confirmar.
 - Ícone novo (lua de páginas com vaga-lume, fundo terracota): ícone adaptativo, redondo, monocromático (Android 13), splash e tela Sobre em Ajustes.

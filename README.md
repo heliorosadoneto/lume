@@ -28,7 +28,7 @@ Abra o livro, continue de onde parou, grife o que importa.</p>
 
 ## Por que o Lume
 
-O Lume é um leitor para o celular, no espírito de um Kindle, feito para ler com calma. Não tem loja, não tem anúncios e não pede conta. Na primeira abertura o Lume cria a sua pasta, **Documentos/Lume**. Toque em **Importar** para copiar para ela os seus EPUBs, PDFs e TXTs (vários de uma vez), ou aponte outra pasta que você já tenha. A biblioteca aparece em lista, com capa, título, autor e o quanto você já leu.
+O Lume é um leitor para o celular, no espírito de um Kindle, feito para ler com calma. Não tem loja, não tem anúncios e não pede conta. Na primeira abertura o Lume cria a sua pasta, **Documentos/Lume**. Toque em **Importar** para copiar para ela os seus EPUBs, PDFs e TXTs (vários de uma vez), ou adicione as pastas que você já tem (quantas quiser). A biblioteca aparece em lista, com capa, título, autor e o quanto você já leu.
 
 Na primeira abertura há livros de demonstração em domínio público (Machado de Assis e José de Alencar), só para você ver o app funcionando. Depois, use a sua própria pasta.
 
@@ -40,13 +40,11 @@ O APK de release fica neste repositório:
 
 1. Baixe o arquivo no celular Android (7 ou mais novo).
 2. Abra-o e permita **instalar apps desta fonte** quando o sistema pedir.
-3. Abra o **Lume** e toque em **Importar** para copiar os seus livros para a pasta do Lume, ou use o **+** para escolher outra pasta.
+3. Abra o **Lume** e toque em **Importar** para copiar os seus livros para a pasta do Lume, ou use o **+** para adicionar outras pastas.
 
 A chave de assinatura fica só na máquina que gera o APK (`android/key.properties`) e **não** entra no git. Guarde um backup dessa chave: sem ela, uma atualização futura não pode ser instalada por cima desta.
 
-## Próxima versão (1.3, em aprovação): pasta do Lume, Importar, TXT, Markdown e ícone novo
-
-> Ainda sem APK. Estas telas são para aprovação.
+## Versão 1.3.0 — 13 de novembro de 2026: pasta do Lume, Importar, TXT, Markdown, apagar livros, várias pastas e ícone novo
 
 **A pasta do Lume.** Na primeira abertura o Lume cria uma pasta só dele:
 
@@ -60,11 +58,26 @@ O caminho aparece em *Ajustes → Pasta do Lume* e no topo da biblioteca. Livros
 
 **Arquivos colocados pelo gerenciador.** A pasta do Lume é relida ao abrir o app e ao voltar para ele (e vigiada enquanto ele está aberto), com subpastas. No Android 11 ou mais novo, para ver arquivos que *outro* app colocou em Documentos/Lume, o Lume precisa do “Acesso a todos os arquivos” (botão **Liberar acesso** em *Ajustes*); o que o próprio Lume importou aparece sempre.
 
-**Outra pasta.** Continua dando para escolher uma pasta qualquer (*Usar outra pasta*): os livros dela são lidos onde estão, sem cópia, junto com os da pasta do Lume.
+**Várias pastas.** Em *Ajustes → Pastas* fica a **pasta do Lume** (fixa) e, abaixo, **quantas outras pastas você quiser** (**Adicionar pasta**, também no **+**). Cada uma mostra o caminho e quantos livros tem (contando as subpastas). Os livros de todas são lidos onde estão, sem cópia, e aparecem juntos na biblioteca, com o nome da pasta ou da subpasta em cada livro. O mesmo livro em duas pastas aparece uma vez só (vale a pasta adicionada primeiro). **Remover** uma pasta só tira os livros dela da biblioteca: nenhum arquivo é apagado. Quem já tinha escolhido uma pasta na versão anterior a encontra na lista. *Atualizar pastas* relê todas.
+
+Limites do Android, explicados na própria tela: para ler pastas fora da do Lume é preciso o “Acesso a todos os arquivos”; no Android 11 ou mais novo, o seletor não deixa escolher Android/data nem a raiz de Downloads (escolha uma subpasta, como Download/Livros).
+
+**Apagar livros.** Toque longo num livro para entrar no modo de seleção: aparecem as marcas, a contagem no topo, **Selecionar todos** e **Cancelar** (ou o botão Voltar); tocar marca e desmarca. Cada livro também tem o menu **⋮** (*Abrir*, *Selecionar*, *Apagar…*). **Apagar** pergunta o que fazer:
+
+- **Tirar só da biblioteca**: o arquivo continua no celular e não volta sozinho ao ler as pastas. Dá para desfazer na hora (*Desfazer* no aviso) ou depois em *Ajustes → Livros ocultos*.
+- **Apagar o arquivo também**: apaga do celular e limpa o que o Lume guardou do livro (posição, destaques, notas, marcadores, capa e o texto do PDF em cache). Na pasta do Lume sempre funciona; em outras pastas, se o Android não deixar, o Lume explica na tela e não mexe em nada. Se houver uma cópia idêntica em outra pasta, só o arquivo mostrado é apagado e a leitura fica guardada.
+
+| Seleção | Apagar: duas opções | Depois, com Desfazer |
+|---|---|---|
+| <img src="docs/screenshots/48_selecao.png" width="230" alt="Três livros selecionados"> | <img src="docs/screenshots/49_apagar_dialogo.png" width="230" alt="Tirar só da biblioteca ou apagar o arquivo"> | <img src="docs/screenshots/50_apagou_desfazer.png" width="230" alt="3 livros saíram da biblioteca, Desfazer"> |
+
+| Ajustes → Pastas | Adicionar pasta e limites | Livros ocultos |
+|---|---|---|
+| <img src="docs/screenshots/51_ajustes_pastas.png" width="230" alt="Pasta do Lume e mais duas pastas"> | <img src="docs/screenshots/52_pastas_limites.png" width="230" alt="Adicionar pasta e limites do Android"> | <img src="docs/screenshots/53_livros_ocultos.png" width="230" alt="Livros ocultos com Mostrar"> |
 
 **TXT.** Arquivos `.txt` abrem no leitor de texto, com fonte, temas, destaques e notas. O Lume reconhece UTF-8 (com ou sem BOM), UTF-16 com BOM e, se não for UTF-8, Latin-1/Windows-1252. Parágrafos são separados por linha em branco, títulos como *CAPÍTULO I* viram sumário e o cabeçalho e a licença do Project Gutenberg ficam de fora do texto.
 
-**Markdown.** Arquivos `.md` e `.markdown` entram no Importar, na pasta do Lume e na outra pasta, com o filtro *MD* na biblioteca. O título vem do cabeçalho YAML (`title:`), do primeiro título `#` ou do nome do arquivo. O texto abre formatado no mesmo leitor dos EPUBs (fonte, tamanho, temas, destaques, notas e posição salva): títulos (que também formam o sumário), negrito, itálico, riscado, listas (numeradas, com níveis e de tarefas), citações, código em linha e blocos de código em fonte monoespaçada (com rolagem lateral), linhas horizontais, tabelas e imagens locais (o caminho é relativo à pasta do `.md`; se a imagem não existir, aparece um aviso no lugar). Links para `#seções` saltam no texto; links da internet abrem no navegador depois de uma confirmação. A leitura usa o pacote [markdown](https://pub.dev/packages/markdown) (licença BSD).
+**Markdown.** Arquivos `.md` e `.markdown` entram no Importar, na pasta do Lume e nas outras pastas, com o filtro *MD* na biblioteca. O título vem do cabeçalho YAML (`title:`), do primeiro título `#` ou do nome do arquivo. O texto abre formatado no mesmo leitor dos EPUBs (fonte, tamanho, temas, destaques, notas e posição salva): títulos (que também formam o sumário), negrito, itálico, riscado, listas (numeradas, com níveis e de tarefas), citações, código em linha e blocos de código em fonte monoespaçada (com rolagem lateral), linhas horizontais, tabelas e imagens locais (o caminho é relativo à pasta do `.md`; se a imagem não existir, aparece um aviso no lugar). Links para `#seções` saltam no texto; links da internet abrem no navegador depois de uma confirmação. A leitura usa o pacote [markdown](https://pub.dev/packages/markdown) (licença BSD).
 
 **Ícone novo.** Uma lua feita de páginas com um vaga-lume, sobre terracota: ícone adaptativo (fundo `#D46950`, lua dentro da zona segura), versões redonda e quadrada, camada monocromática para os ícones temáticos do Android 13, splash e tela *Sobre*. Gerado por `tool/make_icon.py` a partir de `branding/lume-logo.jpg`.
 
@@ -151,7 +164,7 @@ Há ainda o tema verde claro e a aba de marcadores (`docs/screenshots/06_leitor_
 - **Biblioteca em lista.** Capa (a do EPUB ou a primeira página do PDF), título, autor, etiqueta EPUB, PDF ou TXT, pasta de onde veio, número de páginas do PDF, barra de progresso ou a etiqueta *Novo*. Filtro *Todos · PDF · EPUB · TXT*. Puxe para baixo para atualizar.
 - **Continuar leitura.** Uma prateleira no topo com os livros em andamento, do mais recente para o mais antigo.
 - **Pasta do Lume.** Criada na primeira abertura (Documentos/Lume, ou a pasta do app). Tudo o que você importa vai para lá, e o que você colocar nela pelo gerenciador de arquivos também entra na biblioteca.
-- **Outra pasta.** No **+** (ou em *Ajustes*) você escolhe uma pasta do celular. O Lume procura arquivos `.epub`, `.pdf` e `.txt` nela e em todas as subpastas, mostra o progresso (*Encontrados 34 livros…*), ignora o resto e não lista o mesmo livro duas vezes (mesmo arquivo com outro nome também conta como repetido). Os arquivos não são copiados: ficam onde estão. O caminho fica salvo e **Atualizar pasta** pega os livros novos.
+- **Outras pastas.** No **+** (ou em *Ajustes → Pastas*) você adiciona pastas do celular, quantas quiser. O Lume procura arquivos `.epub`, `.pdf` e `.txt` nela e em todas as subpastas, mostra o progresso (*Encontrados 34 livros…*), ignora o resto e não lista o mesmo livro duas vezes (mesmo arquivo com outro nome também conta como repetido). Os arquivos não são copiados: ficam onde estão. As pastas ficam salvas e **Atualizar pastas** pega os livros novos.
 - **Atualizar automaticamente.** Com a opção ligada, livros novos na pasta entram sozinhos na biblioteca. A pasta também é relida quando o app volta à tela.
 - **Importar.** O botão **Importar** copia vários EPUBs, PDFs ou TXTs de uma vez para a pasta do Lume, com progresso; nomes iguais viram `nome (2)` e arquivos idênticos são pulados.
 - **TXT.** Texto puro no mesmo leitor dos EPUBs, com UTF-8 ou Latin-1 reconhecidos sozinhos.
@@ -172,7 +185,7 @@ Loja de livros e conta na nuvem ficam de fora.
 flowchart LR
   I[Importar] --> L[Documentos/Lume]
   L --> B[Lume]
-  A[Outra pasta<br>opcional] --> B
+  A[Outras pastas<br>opcionais] --> B
   B --> C[Biblioteca]
   C --> D[Leitor EPUB]
   C --> P[Leitor PDF<br>PDFium via pdfrx]
@@ -194,9 +207,9 @@ lib/
   markdown_book.dart lê Markdown (títulos, listas, citações, código, tabelas, imagens, links)
   importer.dart   copia para a pasta do Lume (nome (2), repetidos por hash, progresso)
   lume_folder.dart escolhe e cria a pasta do Lume (Documentos/Lume ou a do app)
-  library.dart    lê a pasta do Lume e a outra pasta (e subpastas) com progresso
+  library.dart    lê a pasta do Lume e as outras pastas (e subpastas) com progresso, oculta e apaga livros
   store.dart      guarda posição, destaques, marcadores e preferências
-  screens/        biblioteca, leitores EPUB e PDF, pasta, caderno, aparência e ajustes
+  screens/        biblioteca, leitores EPUB e PDF, pasta, caderno, aparência, ajustes e apagar livros
 assets/fonts/     Literata, Lora e Source Sans 3 (licença SIL OFL)
 demo_folder/      4 EPUBs, 3 PDFs (pdf/), 1 TXT (txt/) e 1 Markdown com imagem (md/) de exemplo para copiar ao celular
 assets/logo/      ícone do app usado no Sobre
@@ -231,7 +244,7 @@ Para rodar no celular em modo de desenvolvimento:
 flutter run
 ```
 
-Toque em **Importar** e escolha arquivos de `demo_folder/` copiados para o aparelho, ou escolha a pasta em *Ajustes → Outra pasta*.
+Toque em **Importar** e escolha arquivos de `demo_folder/` copiados para o aparelho, ou adicione a pasta em *Ajustes → Pastas*.
 
 O build de release usa `android/key.properties` (ignorado pelo git). Sem esse arquivo, o Gradle usa a chave de debug, só para desenvolvimento.
 
@@ -257,11 +270,14 @@ Os testes de PDF usam o PDFium no Linux. O pacote compila uma pequena biblioteca
 - PDF escaneado (só imagem) abre normalmente, mas os temas tingem a imagem também. Para fotos, use *Cores originais da página*.
 - A posição no PDF é salva por página, não pelo ponto exato dentro da página.
 - O título do PDF vem dos metadados quando o dicionário de informações não está comprimido; senão vem do nome do arquivo.
-- Markdown: ao importar pelo seletor do Android, só o `.md` é copiado, e as imagens dele não vão junto (o seletor entrega um arquivo de cada vez). Para ver as imagens, coloque o `.md` com a pasta das imagens na pasta do Lume pelo gerenciador de arquivos, ou use *Outra pasta*. Imagens da internet não são baixadas. Links para outros arquivos `.md` ainda não abrem. HTML dentro do Markdown vira texto simples, e notas de rodapé e fórmulas não são formatadas. Um destaque não pega células de tabela nem legendas de imagem.
+- Markdown: ao importar pelo seletor do Android, só o `.md` é copiado, e as imagens dele não vão junto (o seletor entrega um arquivo de cada vez). Para ver as imagens, coloque o `.md` com a pasta das imagens na pasta do Lume pelo gerenciador de arquivos, ou adicione a pasta em *Ajustes → Pastas*. Imagens da internet não são baixadas. Links para outros arquivos `.md` ainda não abrem. HTML dentro do Markdown vira texto simples, e notas de rodapé e fórmulas não são formatadas. Um destaque não pega células de tabela nem legendas de imagem.
 - No Android, o seletor do Importar mostra todos os arquivos (o Android não conhece o tipo do `.md` e o esconderia); o que não for EPUB, PDF, TXT ou Markdown aparece como *Formato não suportado* no resumo.
-- Com *Outra pasta*, todos os `.md` dela entram na biblioteca (inclusive `README.md` de projetos, se a pasta tiver).
+- Numa pasta adicionada, todos os `.md` dela entram na biblioteca (inclusive `README.md` de projetos, se a pasta tiver).
 - TXT: o Lume reconhece UTF-8, UTF-16 com BOM e Latin-1/Windows-1252; outras codificações (UTF-16 sem BOM, Mac Roman…) podem trocar acentos. Títulos são achados por heurística (*Capítulo*, números romanos, linhas curtas em maiúsculas).
-- A pasta do Lume ainda não foi testada num aparelho de verdade, só nos testes.
+- A pasta do Lume, as várias pastas e o apagar ainda não foram testados num aparelho de verdade, só nos testes.
+- Apagar um arquivo de outra pasta (fora da do Lume) depende do “Acesso a todos os arquivos”; em cartão SD ou pastas protegidas o Android pode recusar, e o Lume avisa sem apagar. Não há lixeira: *Apagar o arquivo também* não pode ser desfeito.
+- *Livros ocultos* guarda o livro pelo conteúdo: uma edição diferente do mesmo livro (outro arquivo) aparece de novo.
+- Se uma pasta adicionada for apagada ou ficar sem permissão, ela continua na lista com o aviso *Pasta não encontrada ou sem acesso* até ser removida.
 - Alguns EPUBs do Project Gutenberg abrem na página de licença em inglês antes do texto do livro.
 
 ## Segurança e privacidade

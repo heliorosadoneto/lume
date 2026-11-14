@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:path/path.dart' as p;
 import 'package:permission_handler/permission_handler.dart';
 
 import '../library.dart';
@@ -8,6 +9,7 @@ import '../store.dart';
 import '../theme.dart';
 import '../widgets.dart';
 import 'appearance.dart';
+import 'delete_books.dart';
 import 'folder_import.dart';
 import 'import_books.dart';
 import '../lume_folder.dart';
@@ -74,7 +76,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Pasta do Lume', style: Lume.s(16.5, w: 650)),
+                      Row(
+                        children: [
+                          Text('Pasta do Lume', style: Lume.s(16.5, w: 650)),
+                          const SizedBox(width: 8),
+                          Container(
+                            key: const ValueKey('lume-fixed'),
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Lume.line),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.lock_outline_rounded, size: 12, color: Lume.muted),
+                                const SizedBox(width: 3),
+                                Text('fixa', style: Lume.s(11.5, w: 600, color: Lume.muted)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: 3),
                       Text(friendlyPath(lib.importDir.path), style: Lume.s(14, h: 1.3)),
                       const SizedBox(height: 4),
@@ -128,13 +151,131 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  Future<void> _removeFolder(String f) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        key: const ValueKey('remove-folder-dialog'),
+        backgroundColor: const Color(0xFFFBF6EC),
+        title: Text('Remover a pasta ${p.basename(f)}?', style: Lume.s(20, w: 650, family: Lume.serif)),
+        content: Text(
+          'Os livros dela saem da biblioteca, mas nenhum arquivo é apagado. Dá para adicionar a pasta de novo quando quiser.',
+          style: Lume.s(15, h: 1.4),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          FilledButton(key: const ValueKey('remove-folder-ok'), onPressed: () => Navigator.pop(context, true), child: const Text('Remover')),
+        ],
+      ),
+    );
+    if (ok == true) await lib.removeFolder(f);
+  }
+
+  Widget _foldersCard() {
+    final fs = lib.folders;
+    Widget row(String f) {
+      final n = lib.countIn(f);
+      final exists = Directory(f).existsSync();
+      return Padding(
+        key: ValueKey('folder-$f'),
+        padding: const EdgeInsets.fromLTRB(16, 10, 6, 10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(color: Lume.accentSoft, borderRadius: BorderRadius.circular(12)),
+              child: const Icon(Icons.folder_rounded, color: Lume.accent),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(p.basename(f), style: Lume.s(16.5, w: 650)),
+                  const SizedBox(height: 2),
+                  Text(friendlyPath(f), style: Lume.s(13.5, color: Lume.muted, h: 1.3)),
+                  const SizedBox(height: 3),
+                  Text(
+                    lib.scanning ? 'Procurando livros…' : (exists ? '$n ${n == 1 ? 'livro' : 'livros'} (com subpastas)' : 'Pasta não encontrada ou sem acesso'),
+                    style: Lume.s(13.5, color: exists ? Lume.accent : const Color(0xFFB3412E), w: 600),
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              key: ValueKey('remove-$f'),
+              tooltip: 'Remover pasta',
+              onPressed: () => _removeFolder(f),
+              icon: const Icon(Icons.remove_circle_outline_rounded, color: Lume.muted),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Card(
+      key: const ValueKey('folders-card'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+            child: Row(
+              children: [
+                Expanded(child: Text('Outras pastas', style: Lume.s(16.5, w: 650))),
+                Text(fs.isEmpty ? 'nenhuma' : '${fs.length}', style: Lume.s(14, color: Lume.muted)),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
+            child: Text('Lidas onde estão, sem copiar. Os livros de todas aparecem juntos na biblioteca.', style: Lume.s(13.5, color: Lume.muted, h: 1.35)),
+          ),
+          for (final f in fs) ...[const Divider(height: 1), row(f)],
+          const Divider(height: 1),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: FilledButton.tonalIcon(
+              key: const ValueKey('choose-folder'),
+              onPressed: _chooseFolder,
+              icon: const Icon(Icons.create_new_folder_outlined, size: 20),
+              label: const Text('Adicionar pasta'),
+            ),
+          ),
+          Container(
+            key: const ValueKey('folders-note'),
+            margin: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: const Color(0xFFF1E8D8), borderRadius: BorderRadius.circular(12)),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.info_outline_rounded, size: 18, color: Lume.muted),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '${allFiles ? '' : 'Para ler pastas fora da do Lume, o Android pede o “Acesso a todos os arquivos”. '}'
+                    'No Android 11 ou mais novo, o seletor não deixa escolher algumas pastas, como Android/data e a raiz de Downloads: '
+                    'escolha uma subpasta (por exemplo Download/Livros). Remover uma pasta só tira os livros dela da biblioteca; nenhum arquivo é apagado.',
+                    style: Lume.s(13, color: Lume.muted, h: 1.4),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: lib,
       builder: (context, _) {
-        final f = lib.folder;
-        final inFolder = lib.books.where((b) => b.source == BookSource.folder).length;
+        final hidden = lib.hidden.length;
         return Scaffold(
           appBar: AppBar(
             titleSpacing: 4,
@@ -143,66 +284,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
           body: ListView(
             padding: const EdgeInsets.fromLTRB(20, 4, 20, 40),
             children: [
-              _label('Biblioteca'),
+              _label('Pastas'),
               _lumeFolderCard(),
+              const SizedBox(height: 12),
+              _foldersCard(),
               const SizedBox(height: 12),
               Card(
                 child: Column(
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 6),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(color: Lume.accentSoft, borderRadius: BorderRadius.circular(12)),
-                            child: const Icon(Icons.folder_rounded, color: Lume.accent),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Outra pasta (opcional)', style: Lume.s(16.5, w: 650)),
-                                const SizedBox(height: 3),
-                                Text(
-                                  f == null ? 'Para ler livros onde já estão, sem copiar' : friendlyPath(f),
-                                  style: Lume.s(14, color: f == null ? Lume.muted : Lume.ink, h: 1.3),
-                                ),
-                                if (f != null) ...[
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    lib.scanning
-                                        ? 'Procurando livros…'
-                                        : '$inFolder ${inFolder == 1 ? 'livro encontrado' : 'livros encontrados'} (PDF e EPUB)'
-                                              '${lib.failed.isEmpty ? '' : ' · ${lib.failed.length} com erro'}',
-                                    style: Lume.s(13.5, color: Lume.accent, w: 600),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(74, 6, 12, 12),
-                      child: Row(
-                        children: [
-                          FilledButton.tonalIcon(
-                            key: const ValueKey('choose-folder'),
-                            onPressed: _chooseFolder,
-                            icon: const Icon(Icons.folder_open_rounded, size: 20),
-                            label: Text(f == null ? 'Escolher outra pasta' : 'Trocar pasta'),
-                          ),
-                          const SizedBox(width: 8),
-                          if (f != null) TextButton(onPressed: () => lib.setFolder(null), child: const Text('Remover')),
-                        ],
-                      ),
-                    ),
-                    const Divider(),
                     SwitchListTile(
                       contentPadding: const EdgeInsets.fromLTRB(16, 4, 12, 4),
                       secondary: const Icon(Icons.autorenew_rounded, color: Lume.ink),
@@ -218,9 +307,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ListTile(
                       contentPadding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
                       leading: const Icon(Icons.manage_search_rounded, color: Lume.ink),
-                      title: const Text('Atualizar pasta'),
-                      subtitle: const Text('Lê a pasta e as subpastas de novo e pega os livros novos'),
-                      onTap: lib.folder == null ? null : () => rescanFolder(context, lib),
+                      title: const Text('Atualizar pastas'),
+                      subtitle: const Text('Lê todas as pastas e subpastas de novo e pega os livros novos'),
+                      onTap: () => rescanFolder(context, lib),
+                    ),
+                    const Divider(),
+                    ListTile(
+                      key: const ValueKey('hidden-books'),
+                      contentPadding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                      leading: const Icon(Icons.visibility_off_outlined, color: Lume.ink),
+                      title: const Text('Livros ocultos'),
+                      subtitle: Text(
+                        hidden == 0
+                            ? 'Nenhum livro tirado da biblioteca'
+                            : '$hidden ${hidden == 1 ? 'livro tirado' : 'livros tirados'} só da biblioteca · toque para mostrar de novo',
+                      ),
+                      trailing: const Icon(Icons.chevron_right_rounded, color: Lume.muted),
+                      onTap: () async {
+                        await Navigator.of(context).push(MaterialPageRoute(builder: (_) => HiddenBooksScreen(library: lib)));
+                        if (mounted) setState(() {});
+                      },
                     ),
                   ],
                 ),
@@ -229,7 +335,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 padding: const EdgeInsets.fromLTRB(4, 10, 4, 0),
                 child: Text(
                   'O Lume lê EPUB, TXT e Markdown (texto que se ajusta à tela) e PDF (modo texto ou páginas como no original). '
-                  '“Importar” copia para a pasta do Lume; os livros da outra pasta não são copiados, ficam onde estão.',
+                  '“Importar” copia para a pasta do Lume; os livros das outras pastas não são copiados, ficam onde estão.',
                   style: Lume.s(13.5, color: Lume.muted),
                 ),
               ),

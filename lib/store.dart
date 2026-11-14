@@ -1,5 +1,5 @@
 // Persistência local (SharedPreferences): posição de leitura, destaques,
-// marcadores, preferências de leitura e a pasta escolhida.
+// marcadores, preferências de leitura, as pastas e os livros ocultos.
 import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -86,6 +86,13 @@ class ReaderSettings {
   );
 }
 
+class HiddenBook {
+  const HiddenBook(this.id, this.title, this.path, this.format);
+  final String id, title, path, format;
+  Map<String, dynamic> toJson() => {'id': id, 't': title, 'p': path, 'f': format};
+  static HiddenBook fromJson(Map<String, dynamic> j) => HiddenBook(j['id'] as String, j['t'] as String, j['p'] as String, (j['f'] as String?) ?? 'epub');
+}
+
 class Store {
   static late SharedPreferences _p;
   static Future<void> init() async => _p = await SharedPreferences.getInstance();
@@ -139,8 +146,32 @@ class Store {
   static String? get lumeFolder => _p.getString('lumeFolder');
   static set lumeFolder(String? v) => v == null ? _p.remove('lumeFolder') : _p.setString('lumeFolder', v);
 
-  static String? get folder => _p.getString('folder');
-  static set folder(String? f) => f == null ? _p.remove('folder') : _p.setString('folder', f);
+  /// Outras pastas (além da do Lume), lidas onde estão, com subpastas.
+  /// Até a 1.2 havia uma só ('folder'); ela entra na lista na primeira leitura.
+  static List<String> get folders {
+    final raw = _p.getString('folders');
+    if (raw != null) return [for (final f in jsonDecode(raw) as List) f as String];
+    final old = _p.getString('folder');
+    final list = [?old];
+    folders = list;
+    _p.remove('folder');
+    return list;
+  }
+
+  static set folders(List<String> l) => _p.setString('folders', jsonEncode(l));
+
+  /// Livros tirados só da biblioteca (o arquivo continua no lugar): por id,
+  /// com título, caminho e formato para a lista "Livros ocultos".
+  static List<HiddenBook> get hidden => [for (final j in jsonDecode(_p.getString('hidden') ?? '[]') as List) HiddenBook.fromJson(j as Map<String, dynamic>)];
+  static set hidden(List<HiddenBook> l) => _p.setString('hidden', jsonEncode([for (final h in l) h.toJson()]));
+
+  /// Apaga tudo o que o Lume guardou sobre um livro (posição, destaques,
+  /// notas, marcadores, páginas e modo do PDF).
+  static void forget(String book) {
+    for (final k in ['pos', 'hl', 'bm', 'pages', 'pdfmode']) {
+      _p.remove('$k:$book');
+    }
+  }
 
   static bool get watchFolder => _p.getBool('watch') ?? true;
   static set watchFolder(bool v) => _p.setBool('watch', v);

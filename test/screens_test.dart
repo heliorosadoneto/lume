@@ -176,7 +176,7 @@ void main() {
     await t.pumpWidget(wrap(SettingsScreen(library: lib)));
     await settle(t);
     expect(find.text('Armazenamento interno/Livros'), findsOneWidget);
-    expect(find.text('4 livros encontrados (PDF e EPUB)'), findsOneWidget);
+    expect(find.text('4 livros (com subpastas)'), findsOneWidget);
     await snap('02_ajustes_pasta');
     await t.drag(find.byType(ListView).first, const Offset(0, -900));
     await settle(t);

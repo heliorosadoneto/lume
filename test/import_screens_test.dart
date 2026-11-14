@@ -172,13 +172,14 @@ void main() {
     await snap(t, '33_biblioteca_depois');
   });
 
-  testWidgets('Ajustes: pasta do Lume em Documentos e a outra pasta', (t) async {
+  testWidgets('Ajustes: pasta do Lume em Documentos e as outras pastas', (t) async {
     phone(t);
     final lib = await freshLibrary(t);
     await t.pumpWidget(wrap(SettingsScreen(library: lib, allFilesAccess: false)));
     await settle(t);
     expect(find.text('Armazenamento interno/Documents/Lume'), findsOneWidget);
-    expect(find.text('Outra pasta (opcional)'), findsOneWidget);
+    expect(find.text('Outras pastas'), findsOneWidget);
+    expect(find.byKey(const ValueKey('lume-fixed')), findsOneWidget);
     await snap(t, '34_ajustes_pasta_lume');
     // Sobre, no fim dos ajustes
     await t.scrollUntilVisible(find.byKey(const ValueKey('about')), 400, scrollable: find.byType(Scrollable).first);

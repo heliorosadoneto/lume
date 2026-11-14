@@ -7,6 +7,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import '../epub.dart';
 import '../library.dart';
 import '../theme.dart';
 import '../widgets.dart';
@@ -71,20 +72,23 @@ class StorageAccessDialog extends StatelessWidget {
   );
 }
 
-/// Fluxo completo: permissão → seletor de pasta → leitura com progresso.
+/// Fluxo completo: permissão → seletor de pasta → leitura com progresso (a pasta entra na lista).
 Future<void> chooseFolder(BuildContext context, Library lib) async {
   final messenger = ScaffoldMessenger.of(context);
   if (!await ensureStorageAccess(context)) {
     messenger.showSnackBar(const SnackBar(content: Text('Sem permissão para ler a pasta. Libere o acesso aos arquivos.')));
     return;
   }
-  final dir = await FilePicker.getDirectoryPath(dialogTitle: 'Pasta de livros', initialDirectory: lib.folder);
+  final dir = await FilePicker.getDirectoryPath(dialogTitle: 'Adicionar pasta de livros', initialDirectory: lib.folders.lastOrNull);
   if (dir == null || !context.mounted) return;
-  await showFolderScan(context, lib, () => lib.setFolder(dir));
+  await showFolderScan(context, lib, () => lib.addFolder(dir));
 }
 
 /// Lê a pasta de novo (pega arquivos novos e tira os que sumiram).
-Future<void> rescanFolder(BuildContext context, Library lib) => showFolderScan(context, lib, lib.load);
+Future<void> rescanFolder(BuildContext context, Library lib) {
+  lib.lastAdded = null;
+  return showFolderScan(context, lib, lib.load);
+}
 
 Future<void> showFolderScan(BuildContext context, Library lib, Future<void> Function() run) => showModalBottomSheet<void>(
   context: context,
@@ -129,7 +133,7 @@ class _FolderScanSheetState extends State<FolderScanSheet> {
       const SizedBox(width: 8),
       Expanded(
         child: Text(
-          friendlyPath(lib.folder ?? ''),
+          friendlyPath(lib.lastAdded ?? (lib.folders.length == 1 ? lib.folders.single : '${lib.folders.length} pastas e a pasta do Lume')),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
           style: Lume.s(14, color: Lume.muted),
@@ -175,9 +179,12 @@ class _FolderScanSheetState extends State<FolderScanSheet> {
   }
 
   Widget _result(BuildContext context) {
-    final inFolder = lib.books.where((b) => b.source == BookSource.folder).toList();
+    final added = lib.lastAdded;
+    final inFolder = lib.books.where((b) => added == null ? b.source == BookSource.folder : b.root == added).toList();
     final pdf = inFolder.where((b) => b.meta.isPdf).length;
-    final epub = inFolder.length - pdf;
+    final epub = inFolder.where((b) => b.meta.format == BookFormat.epub).length;
+    final txt = inFolder.where((b) => b.meta.format == BookFormat.txt).length;
+    final md = inFolder.where((b) => b.meta.format == BookFormat.md).length;
     final subs = inFolder.map((b) => b.subfolder).whereType<String>().toSet().length;
     final r = lib.report;
     Widget row(IconData i, String label, String value, {Color color = Lume.ink}) => Padding(
@@ -224,6 +231,8 @@ class _FolderScanSheetState extends State<FolderScanSheet> {
         const SizedBox(height: 4),
         row(Icons.picture_as_pdf_outlined, 'PDF', '$pdf'),
         row(Icons.menu_book_outlined, 'EPUB', '$epub'),
+        if (txt > 0) row(Icons.notes_rounded, 'TXT', '$txt'),
+        if (md > 0) row(Icons.tag_rounded, 'Markdown', '$md'),
         row(Icons.account_tree_outlined, 'Subpastas com livros', '$subs'),
         if (r.duplicates > 0) row(Icons.copy_all_outlined, 'Repetidos (ignorados)', '${r.duplicates}', color: Lume.muted),
         if (r.failed > 0) row(Icons.error_outline_rounded, 'Não abriram', '${r.failed}', color: Lume.accent),

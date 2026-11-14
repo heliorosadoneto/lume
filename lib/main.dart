@@ -28,7 +28,13 @@ Future<void> main() async {
   final lume = LumeFolder.resolve(appExternal: ext, internal: legacy.path);
   LumeFolder.migrate(legacy, lume.dir, Library.isBook);
   Store.lumeFolder = lume.path;
-  final library = Library(lume.dir, coversDir: Directory(p.join(support, 'capas')), lumeKind: lume.kind, legacyDirs: [if (legacy.path != lume.path) legacy]);
+  final library = Library(
+    lume.dir,
+    coversDir: Directory(p.join(support, 'capas')),
+    textCacheDir: PdfBookScreen.cacheDir,
+    lumeKind: lume.kind,
+    legacyDirs: [if (legacy.path != lume.path) legacy],
+  );
   await library.seedIfNeeded(rootBundle);
   runApp(LumeApp(library: library));
   await library.load();
