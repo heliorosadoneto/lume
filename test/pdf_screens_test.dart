@@ -10,6 +10,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lume/epub.dart';
 import 'package:lume/library.dart';
+import 'package:lume/lume_folder.dart';
 import 'package:lume/pdf.dart';
 import 'package:lume/screens/folder_import.dart';
 import 'package:lume/screens/library.dart';
@@ -24,14 +25,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'support/pdfium.dart';
 
+import 'support/shots.dart';
+
 Widget wrap(Widget w) => MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: Lume.theme(),
-      locale: const Locale('pt', 'BR'),
-      supportedLocales: const [Locale('pt', 'BR')],
-      localizationsDelegates: GlobalMaterialLocalizations.delegates,
-      home: w,
-    );
+  debugShowCheckedModeBanner: false,
+  theme: Lume.theme(),
+  locale: const Locale('pt', 'BR'),
+  supportedLocales: const [Locale('pt', 'BR')],
+  localizationsDelegates: GlobalMaterialLocalizations.delegates,
+  home: w,
+);
 
 final now = DateTime(2026, 11, 11, 21, 40);
 late Directory root, folder, importDir, coversDir;
@@ -44,8 +47,7 @@ void phone(WidgetTester t) {
   addTearDown(t.view.reset);
 }
 
-Future<void> snap(String name) =>
-    expectLater(find.byType(MaterialApp), matchesGoldenFile('../docs/screenshots/$name.png'));
+Future<void> snap(String name) => snapShot(name);
 
 /// Deixa o PDFium (que roda em outro isolate) terminar de desenhar.
 Future<void> render(WidgetTester t, {int rounds = 12}) async {
@@ -94,7 +96,7 @@ void main() {
     // Pasta "Livros" como no celular: EPUBs soltos, PDFs em subpastas e um PDF repetido.
     root = Directory.systemTemp.createTempSync('lumepdf');
     folder = Directory(p.join(root.path, 'storage', 'emulated', '0', 'Livros'))..createSync(recursive: true);
-    importDir = Directory(p.join(root.path, 'importados'))..createSync();
+    importDir = Directory(p.join(root.path, 'storage', 'emulated', '0', 'Documents', 'Lume'))..createSync(recursive: true);
     coversDir = Directory(p.join(root.path, 'capas'));
     for (final f in Directory('demo_folder').listSync().whereType<File>()) {
       f.copySync(p.join(folder.path, p.basename(f.path)));
@@ -115,7 +117,7 @@ void main() {
   setUp(resetPrefs);
 
   Future<Library> library(WidgetTester t) async {
-    final lib = Library(importDir, coversDir: coversDir);
+    final lib = Library(importDir, coversDir: coversDir, lumeKind: LumeFolderKind.documents);
     await t.runAsync(() async {
       await lib.load(useIsolate: false);
       await lib.coversReady;
@@ -176,7 +178,10 @@ void main() {
       ..scanning = true
       ..scanTotal = 34
       ..scanDone = 13;
-    showModalBottomSheet<void>(context: t.element(find.byType(LibraryScreen)), builder: (_) => FolderScanSheet(library: lib));
+    showModalBottomSheet<void>(
+      context: t.element(find.byType(LibraryScreen)),
+      builder: (_) => FolderScanSheet(library: lib),
+    );
     await render(t, rounds: 2);
     expect(find.text('Encontrados 34 livros…'), findsOneWidget);
     await snap('16_pasta_progresso');

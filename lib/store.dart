@@ -12,20 +12,21 @@ class ReadingPos {
   final double align, percent;
   final DateTime opened;
   Map<String, dynamic> toJson() => {'b': block, 'a': align, 'p': percent, 'o': opened.millisecondsSinceEpoch};
-  static ReadingPos fromJson(Map<String, dynamic> j) => ReadingPos(j['b'] as int, (j['a'] as num).toDouble(),
-      (j['p'] as num).toDouble(), DateTime.fromMillisecondsSinceEpoch(j['o'] as int));
+  static ReadingPos fromJson(Map<String, dynamic> j) =>
+      ReadingPos(j['b'] as int, (j['a'] as num).toDouble(), (j['p'] as num).toDouble(), DateTime.fromMillisecondsSinceEpoch(j['o'] as int));
 }
 
 class Highlight {
-  Highlight(
-      {required this.id,
-      required this.block,
-      required this.start,
-      required this.end,
-      required this.color,
-      required this.text,
-      this.note = '',
-      required this.created});
+  Highlight({
+    required this.id,
+    required this.block,
+    required this.start,
+    required this.end,
+    required this.color,
+    required this.text,
+    this.note = '',
+    required this.created,
+  });
   final String id;
   final int block, start, end;
   HighlightColor color;
@@ -33,19 +34,19 @@ class Highlight {
   String note;
   final DateTime created;
   Map<String, dynamic> toJson() => {
-        'id': id, 'b': block, 's': start, 'e': end, 'c': color.name, 't': text, 'n': note, //
-        'd': created.millisecondsSinceEpoch,
-      };
+    'id': id, 'b': block, 's': start, 'e': end, 'c': color.name, 't': text, 'n': note, //
+    'd': created.millisecondsSinceEpoch,
+  };
   static Highlight fromJson(Map<String, dynamic> j) => Highlight(
-        id: j['id'] as String,
-        block: j['b'] as int,
-        start: j['s'] as int,
-        end: j['e'] as int,
-        color: HighlightColor.values.byName(j['c'] as String),
-        text: j['t'] as String,
-        note: (j['n'] as String?) ?? '',
-        created: DateTime.fromMillisecondsSinceEpoch(j['d'] as int),
-      );
+    id: j['id'] as String,
+    block: j['b'] as int,
+    start: j['s'] as int,
+    end: j['e'] as int,
+    color: HighlightColor.values.byName(j['c'] as String),
+    text: j['t'] as String,
+    note: (j['n'] as String?) ?? '',
+    created: DateTime.fromMillisecondsSinceEpoch(j['d'] as int),
+  );
 }
 
 class Bookmark {
@@ -54,8 +55,7 @@ class Bookmark {
   final String excerpt;
   final DateTime created;
   Map<String, dynamic> toJson() => {'b': block, 'x': excerpt, 'd': created.millisecondsSinceEpoch};
-  static Bookmark fromJson(Map<String, dynamic> j) =>
-      Bookmark(j['b'] as int, j['x'] as String, DateTime.fromMillisecondsSinceEpoch(j['d'] as int));
+  static Bookmark fromJson(Map<String, dynamic> j) => Bookmark(j['b'] as int, j['x'] as String, DateTime.fromMillisecondsSinceEpoch(j['d'] as int));
 }
 
 class ReaderSettings {
@@ -74,17 +74,16 @@ class ReaderSettings {
   int margin; // 0 estreita, 1 média, 2 larga
   bool justify, pageMode;
   double get hPad => const [16.0, 26.0, 40.0][margin];
-  Map<String, dynamic> toJson() =>
-      {'t': theme.name, 'f': font.name, 's': size, 'l': lineHeight, 'm': margin, 'j': justify, 'p': pageMode};
+  Map<String, dynamic> toJson() => {'t': theme.name, 'f': font.name, 's': size, 'l': lineHeight, 'm': margin, 'j': justify, 'p': pageMode};
   static ReaderSettings fromJson(Map<String, dynamic> j) => ReaderSettings(
-        theme: PageTheme.values.byName(j['t'] as String),
-        font: BookFont.values.byName(j['f'] as String),
-        size: (j['s'] as num).toDouble(),
-        lineHeight: (j['l'] as num).toDouble(),
-        margin: j['m'] as int,
-        justify: j['j'] as bool,
-        pageMode: j['p'] as bool,
-      );
+    theme: PageTheme.values.byName(j['t'] as String),
+    font: BookFont.values.byName(j['f'] as String),
+    size: (j['s'] as num).toDouble(),
+    lineHeight: (j['l'] as num).toDouble(),
+    margin: j['m'] as int,
+    justify: j['j'] as bool,
+    pageMode: j['p'] as bool,
+  );
 }
 
 class Store {
@@ -99,16 +98,14 @@ class Store {
   static void savePos(String book, ReadingPos p) => _p.setString('pos:$book', jsonEncode(p.toJson()));
 
   static List<Highlight> highlights(String book) => [
-        for (final j in jsonDecode(_p.getString('hl:$book') ?? '[]') as List) Highlight.fromJson(j as Map<String, dynamic>)
-      ];
-  static void saveHighlights(String book, List<Highlight> h) =>
-      _p.setString('hl:$book', jsonEncode([for (final x in h) x.toJson()]));
+    for (final j in jsonDecode(_p.getString('hl:$book') ?? '[]') as List) Highlight.fromJson(j as Map<String, dynamic>),
+  ];
+  static void saveHighlights(String book, List<Highlight> h) => _p.setString('hl:$book', jsonEncode([for (final x in h) x.toJson()]));
 
   static List<Bookmark> bookmarks(String book) => [
-        for (final j in jsonDecode(_p.getString('bm:$book') ?? '[]') as List) Bookmark.fromJson(j as Map<String, dynamic>)
-      ];
-  static void saveBookmarks(String book, List<Bookmark> b) =>
-      _p.setString('bm:$book', jsonEncode([for (final x in b) x.toJson()]));
+    for (final j in jsonDecode(_p.getString('bm:$book') ?? '[]') as List) Bookmark.fromJson(j as Map<String, dynamic>),
+  ];
+  static void saveBookmarks(String book, List<Bookmark> b) => _p.setString('bm:$book', jsonEncode([for (final x in b) x.toJson()]));
 
   static ReaderSettings get settings {
     final s = _p.getString('settings');
@@ -137,6 +134,10 @@ class Store {
   /// Sem escolha salva, PDFs com texto abrem no modo texto.
   static String? pdfMode(String book) => _p.getString('pdfmode:$book');
   static void setPdfMode(String book, String mode) => _p.setString('pdfmode:$book', mode);
+
+  /// Última pasta do Lume usada (para avisar se ela mudou de lugar).
+  static String? get lumeFolder => _p.getString('lumeFolder');
+  static set lumeFolder(String? v) => v == null ? _p.remove('lumeFolder') : _p.setString('lumeFolder', v);
 
   static String? get folder => _p.getString('folder');
   static set folder(String? f) => f == null ? _p.remove('folder') : _p.setString('folder', f);

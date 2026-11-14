@@ -71,6 +71,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/books/
+    - assets/logo/lume.png
   fonts:
     - family: Literata
       fonts:

@@ -5,13 +5,14 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import '../epub.dart';
 import '../store.dart';
+import '../txt.dart';
 import '../theme.dart';
 import '../widgets.dart';
 import 'appearance.dart';
 import 'notes.dart';
 import 'pdf_book.dart';
 
-/// Abre o livro: PDF no modo texto ou de páginas; EPUB processado fora da thread de interface.
+/// Abre o livro: PDF no modo texto ou de páginas; TXT e EPUB processado fora da thread de interface.
 Future<void> openBook(BuildContext context, BookMeta meta) async {
   final messenger = ScaffoldMessenger.of(context);
   if (meta.isPdf) {
@@ -19,7 +20,7 @@ Future<void> openBook(BuildContext context, BookMeta meta) async {
     return;
   }
   try {
-    final book = await compute(Epub.parseFile, meta.path);
+    final book = await compute(meta.format == BookFormat.txt ? TxtBook.parseFile : Epub.parseFile, meta.path);
     if (!context.mounted) return;
     await Navigator.of(context).push(MaterialPageRoute(builder: (_) => ReaderScreen(book: book)));
   } catch (e) {
@@ -28,8 +29,7 @@ Future<void> openBook(BuildContext context, BookMeta meta) async {
 }
 
 class ReaderScreen extends StatefulWidget {
-  const ReaderScreen(
-      {super.key, required this.book, this.now, this.onPosition, this.appearanceExtra, this.locationLabel});
+  const ReaderScreen({super.key, required this.book, this.now, this.onPosition, this.appearanceExtra, this.locationLabel});
   final Book book;
   final DateTime Function()? now;
 
@@ -116,16 +116,18 @@ class ReaderScreenState extends State<ReaderScreen> {
     final keepNote = note.isNotEmpty ? note : overlapping.map((h) => h.note).where((n) => n.isNotEmpty).join(' ');
     setState(() {
       hls.removeWhere(overlapping.contains);
-      hls.add(Highlight(
-        id: '${_now().microsecondsSinceEpoch}',
-        block: block,
-        start: start,
-        end: end,
-        color: color,
-        text: text.substring(start, end).trim(),
-        note: keepNote,
-        created: _now(),
-      ));
+      hls.add(
+        Highlight(
+          id: '${_now().microsecondsSinceEpoch}',
+          block: block,
+          start: start,
+          end: end,
+          color: color,
+          text: text.substring(start, end).trim(),
+          note: keepNote,
+          created: _now(),
+        ),
+      );
     });
     Store.saveHighlights(book.meta.id, hls);
   }
@@ -203,88 +205,108 @@ class ReaderScreenState extends State<ReaderScreen> {
       child: Scaffold(
         backgroundColor: t.bg,
         body: SafeArea(
-          child: Column(children: [
-            _topBar(t),
-            Expanded(
-              child: LayoutBuilder(builder: (context, c) {
-                _viewport = c.maxHeight;
-                return Stack(children: [
-                  Positioned.fill(
-                    child: ScrollablePositionedList.builder(
-                      itemCount: book.blocks.length,
-                      itemScrollController: items,
-                      scrollOffsetController: offsets,
-                      itemPositionsListener: positions,
-                      initialScrollIndex: current,
-                      initialAlignment: initialAlign,
-                      padding: const EdgeInsets.only(top: 12, bottom: 48),
-                      itemBuilder: (context, i) => _block(i, t),
-                    ),
-                  ),
-                  if (s.pageMode) ...[
-                    Positioned(left: 0, top: 0, bottom: 0, width: c.maxWidth * .16, child: _tapZone(-1)),
-                    Positioned(right: 0, top: 0, bottom: 0, width: c.maxWidth * .16, child: _tapZone(1)),
-                  ],
-                ]);
-              }),
-            ),
-            _bottomBar(t, progress, mins),
-          ]),
+          child: Column(
+            children: [
+              _topBar(t),
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, c) {
+                    _viewport = c.maxHeight;
+                    return Stack(
+                      children: [
+                        Positioned.fill(
+                          child: ScrollablePositionedList.builder(
+                            itemCount: book.blocks.length,
+                            itemScrollController: items,
+                            scrollOffsetController: offsets,
+                            itemPositionsListener: positions,
+                            initialScrollIndex: current,
+                            initialAlignment: initialAlign,
+                            padding: const EdgeInsets.only(top: 12, bottom: 48),
+                            itemBuilder: (context, i) => _block(i, t),
+                          ),
+                        ),
+                        if (s.pageMode) ...[
+                          Positioned(left: 0, top: 0, bottom: 0, width: c.maxWidth * .16, child: _tapZone(-1)),
+                          Positioned(right: 0, top: 0, bottom: 0, width: c.maxWidth * .16, child: _tapZone(1)),
+                        ],
+                      ],
+                    );
+                  },
+                ),
+              ),
+              _bottomBar(t, progress, mins),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _tapZone(int dir) => GestureDetector(
-        key: ValueKey('page$dir'),
-        behavior: HitTestBehavior.opaque,
-        onTap: () => _page(dir),
-      );
+  Widget _tapZone(int dir) => GestureDetector(key: ValueKey('page$dir'), behavior: HitTestBehavior.opaque, onTap: () => _page(dir));
 
   Widget _topBar(PageTheme t) {
-    Widget btn(IconData i, String tip, VoidCallback f, {Color? color}) =>
-        IconButton(icon: Icon(i, color: color ?? t.ink.withValues(alpha: .78)), tooltip: tip, onPressed: f);
+    Widget btn(IconData i, String tip, VoidCallback f, {Color? color}) => IconButton(
+      icon: Icon(i, color: color ?? t.ink.withValues(alpha: .78)),
+      tooltip: tip,
+      onPressed: f,
+    );
     return Padding(
       padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
-      child: Row(children: [
-        btn(Icons.arrow_back_rounded, 'Biblioteca', () => Navigator.of(context).maybePop()),
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(book.meta.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: Lume.s(15.5, w: 650, color: t.ink)),
-            Text(chapterTitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: Lume.s(13, color: t.muted)),
-          ]),
-        ),
-        btn(Icons.toc_rounded, 'Sumário', openToc),
-        btn(Icons.edit_note_rounded, 'Caderno', openNotes),
-        btn(Icons.text_fields_rounded, 'Aparência', openAppearance),
-        btn(_bookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded, 'Marcador', _toggleBookmark,
-            color: _bookmarked ? Lume.accent : null),
-      ]),
+      child: Row(
+        children: [
+          btn(Icons.arrow_back_rounded, 'Biblioteca', () => Navigator.of(context).maybePop()),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  book.meta.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Lume.s(15.5, w: 650, color: t.ink),
+                ),
+                Text(
+                  chapterTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Lume.s(13, color: t.muted),
+                ),
+              ],
+            ),
+          ),
+          btn(Icons.toc_rounded, 'Sumário', openToc),
+          btn(Icons.edit_note_rounded, 'Caderno', openNotes),
+          btn(Icons.text_fields_rounded, 'Aparência', openAppearance),
+          btn(_bookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded, 'Marcador', _toggleBookmark, color: _bookmarked ? Lume.accent : null),
+        ],
+      ),
     );
   }
 
   Widget _bottomBar(PageTheme t, double progress, int mins) => Padding(
-        padding: EdgeInsets.fromLTRB(s.hPad, 6, s.hPad, 12),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          ThinProgress(progress, height: 3, color: t.dark ? Lume.amber : Lume.accent, track: t.muted.withValues(alpha: .25)),
-          const SizedBox(height: 8),
-          Row(children: [
-            Text('${pct(progress)} do livro${widget.locationLabel == null ? '' : ' · ${widget.locationLabel!(current)}'}',
-                style: Lume.s(13, color: t.muted, w: 500)),
+    padding: EdgeInsets.fromLTRB(s.hPad, 6, s.hPad, 12),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ThinProgress(progress, height: 3, color: t.dark ? Lume.amber : Lume.accent, track: t.muted.withValues(alpha: .25)),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Text(
+              '${pct(progress)} do livro${widget.locationLabel == null ? '' : ' · ${widget.locationLabel!(current)}'}',
+              style: Lume.s(13, color: t.muted, w: 500),
+            ),
             const Spacer(),
-            Text(mins <= 1 ? 'Menos de 1 min no capítulo' : '$mins min restantes no capítulo',
-                style: Lume.s(13, color: t.muted)),
-          ]),
-        ]),
-      );
+            Text(mins <= 1 ? 'Menos de 1 min no capítulo' : '$mins min restantes no capítulo', style: Lume.s(13, color: t.muted)),
+          ],
+        ),
+      ],
+    ),
+  );
 
-  TextStyle get _bodyStyle => TextStyle(
-        fontFamily: s.font.family,
-        fontSize: s.size,
-        height: s.lineHeight,
-        color: s.theme.ink,
-        fontVariations: const [FontVariation.weight(400)],
-      );
+  TextStyle get _bodyStyle =>
+      TextStyle(fontFamily: s.font.family, fontSize: s.size, height: s.lineHeight, color: s.theme.ink, fontVariations: const [FontVariation.weight(400)]);
 
   Widget _block(int i, PageTheme t) {
     final b = book.blocks[i];
@@ -293,7 +315,9 @@ class ReaderScreenState extends State<ReaderScreen> {
       case BlockKind.separator:
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 18),
-          child: Center(child: Text('·  ·  ·', style: Lume.s(16, color: t.muted, ls: 2))),
+          child: Center(
+            child: Text('·  ·  ·', style: Lume.s(16, color: t.muted, ls: 2)),
+          ),
         );
       case BlockKind.heading:
         final scale = b.level <= 2 ? 1.4 : (b.level <= 4 ? 1.18 : 0.95);
@@ -335,8 +359,7 @@ class ReaderScreenState extends State<ReaderScreen> {
         final hasHl = hls.any((h) => h.block == i && h.start < sel.end && h.end > sel.start);
         void done() {
           st.hideToolbar();
-          st.userUpdateTextEditingValue(
-              st.textEditingValue.copyWith(selection: TextSelection.collapsed(offset: sel.end)), SelectionChangedCause.toolbar);
+          st.userUpdateTextEditingValue(st.textEditingValue.copyWith(selection: TextSelection.collapsed(offset: sel.end)), SelectionChangedCause.toolbar);
         }
 
         return HighlightToolbar(
@@ -390,36 +413,38 @@ class ReaderScreenState extends State<ReaderScreen> {
       }
       final run = b.runs[ri];
       final h = hs.lastWhere((h) => h.start <= a && h.end >= z, orElse: () => _none);
-      out.add(TextSpan(
-        text: b.text.substring(a, z),
-        style: TextStyle(
-          fontStyle: run.italic ? FontStyle.italic : null,
-          fontWeight: run.bold ? FontWeight.w700 : null,
-          backgroundColor: identical(h, _none) ? null : h.color.on(s.theme),
-          decoration: !identical(h, _none) && h.note.isNotEmpty ? TextDecoration.underline : null,
-          decorationColor: Lume.accent,
-          decorationThickness: 1.5,
+      out.add(
+        TextSpan(
+          text: b.text.substring(a, z),
+          style: TextStyle(
+            fontStyle: run.italic ? FontStyle.italic : null,
+            fontWeight: run.bold ? FontWeight.w700 : null,
+            backgroundColor: identical(h, _none) ? null : h.color.on(s.theme),
+            decoration: !identical(h, _none) && h.note.isNotEmpty ? TextDecoration.underline : null,
+            decorationColor: Lume.accent,
+            decorationThickness: 1.5,
+          ),
         ),
-      ));
+      );
     }
     return out;
   }
 
-  static final _none =
-      Highlight(id: '', block: -1, start: 0, end: 0, color: HighlightColor.amarelo, text: '', created: DateTime(2000));
+  static final _none = Highlight(id: '', block: -1, start: 0, end: 0, color: HighlightColor.amarelo, text: '', created: DateTime(2000));
 }
 
 /// Barra que aparece sobre o texto selecionado: 4 cores, nota, copiar.
 class HighlightToolbar extends StatelessWidget {
-  const HighlightToolbar(
-      {super.key,
-      required this.anchors,
-      required this.onColor,
-      required this.onNote,
-      required this.onCopy,
-      required this.onRemove,
-      this.canRemove = false,
-      this.dark = false});
+  const HighlightToolbar({
+    super.key,
+    required this.anchors,
+    required this.onColor,
+    required this.onNote,
+    required this.onCopy,
+    required this.onRemove,
+    this.canRemove = false,
+    this.dark = false,
+  });
   final TextSelectionToolbarAnchors anchors;
   final ValueChanged<HighlightColor> onColor;
   final VoidCallback onNote, onCopy, onRemove;
@@ -444,42 +469,51 @@ class HighlightToolbar extends StatelessWidget {
           shape: const StadiumBorder(),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              for (final c in HighlightColor.values)
-                Tooltip(
-                  message: c.label,
-                  child: InkResponse(
-                    key: ValueKey('hl-${c.name}'),
-                    onTap: () => onColor(c),
-                    radius: 22,
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 5),
-                      width: 30,
-                      height: 30,
-                      decoration: BoxDecoration(
-                          color: c.color, shape: BoxShape.circle, border: Border.all(color: fg.withValues(alpha: .5), width: 1.5)),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final c in HighlightColor.values)
+                  Tooltip(
+                    message: c.label,
+                    child: InkResponse(
+                      key: ValueKey('hl-${c.name}'),
+                      onTap: () => onColor(c),
+                      radius: 22,
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 5),
+                        width: 30,
+                        height: 30,
+                        decoration: BoxDecoration(
+                          color: c.color,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: fg.withValues(alpha: .5), width: 1.5),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              Container(width: 1, height: 26, margin: const EdgeInsets.symmetric(horizontal: 6), color: fg.withValues(alpha: .25)),
-              IconButton(
+                Container(width: 1, height: 26, margin: const EdgeInsets.symmetric(horizontal: 6), color: fg.withValues(alpha: .25)),
+                IconButton(
                   key: const ValueKey('hl-note'),
                   visualDensity: VisualDensity.compact,
                   tooltip: 'Nota',
                   onPressed: onNote,
-                  icon: Icon(Icons.sticky_note_2_outlined, color: fg)),
-              IconButton(
+                  icon: Icon(Icons.sticky_note_2_outlined, color: fg),
+                ),
+                IconButton(
                   visualDensity: VisualDensity.compact,
                   tooltip: 'Copiar',
                   onPressed: onCopy,
-                  icon: Icon(Icons.content_copy_rounded, size: 20, color: fg)),
-              if (canRemove)
-                IconButton(
+                  icon: Icon(Icons.content_copy_rounded, size: 20, color: fg),
+                ),
+                if (canRemove)
+                  IconButton(
                     visualDensity: VisualDensity.compact,
                     tooltip: 'Remover destaque',
                     onPressed: onRemove,
-                    icon: Icon(Icons.format_color_reset_outlined, color: fg)),
-            ]),
+                    icon: Icon(Icons.format_color_reset_outlined, color: fg),
+                  ),
+              ],
+            ),
           ),
         ),
       ),
@@ -498,49 +532,64 @@ class TocSheet extends StatelessWidget {
       expand: false,
       initialChildSize: .86,
       maxChildSize: .94,
-      builder: (context, ctrl) => Column(children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
-          child: Row(children: [
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Sumário', style: Lume.s(22, w: 650, family: Lume.serif)),
-                const SizedBox(height: 2),
-                Text('${book.meta.title} · ${book.toc.length} capítulos', style: Lume.s(14, color: Lume.muted)),
-              ]),
-            ),
-          ]),
-        ),
-        const Divider(),
-        Expanded(
-          child: ListView.builder(
-            controller: ScrollController(initialScrollOffset: (currentIndex - 3).clamp(0, 1 << 20) * 52.0),
-            itemCount: book.toc.length,
-            itemExtent: 52,
-            itemBuilder: (context, i) {
-              final e = book.toc[i];
-              final here = i == currentIndex;
-              return InkWell(
-                onTap: () => Navigator.pop(context, e.block),
-                child: Container(
-                  color: here ? Lume.accentSoft : null,
-                  padding: EdgeInsets.only(left: 24.0 + e.depth * 16, right: 20),
-                  child: Row(children: [
-                    if (here) const Padding(padding: EdgeInsets.only(right: 10), child: Icon(Icons.circle, size: 8, color: Lume.accent)),
-                    Expanded(
-                      child: Text(e.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Lume.s(16, w: here ? 650 : 450, family: Lume.serif, color: here ? Lume.accent : Lume.ink)),
-                    ),
-                    Text(pct(book.progressAt(e.block)), style: Lume.s(13, color: Lume.muted)),
-                  ]),
+      builder: (context, ctrl) => Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Sumário', style: Lume.s(22, w: 650, family: Lume.serif)),
+                      const SizedBox(height: 2),
+                      Text('${book.meta.title} · ${book.toc.length} capítulos', style: Lume.s(14, color: Lume.muted)),
+                    ],
+                  ),
                 ),
-              );
-            },
+              ],
+            ),
           ),
-        ),
-      ]),
+          const Divider(),
+          Expanded(
+            child: ListView.builder(
+              controller: ScrollController(initialScrollOffset: (currentIndex - 3).clamp(0, 1 << 20) * 52.0),
+              itemCount: book.toc.length,
+              itemExtent: 52,
+              itemBuilder: (context, i) {
+                final e = book.toc[i];
+                final here = i == currentIndex;
+                return InkWell(
+                  onTap: () => Navigator.pop(context, e.block),
+                  child: Container(
+                    color: here ? Lume.accentSoft : null,
+                    padding: EdgeInsets.only(left: 24.0 + e.depth * 16, right: 20),
+                    child: Row(
+                      children: [
+                        if (here)
+                          const Padding(
+                            padding: EdgeInsets.only(right: 10),
+                            child: Icon(Icons.circle, size: 8, color: Lume.accent),
+                          ),
+                        Expanded(
+                          child: Text(
+                            e.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Lume.s(16, w: here ? 650 : 450, family: Lume.serif, color: here ? Lume.accent : Lume.ink),
+                          ),
+                        ),
+                        Text(pct(book.progressAt(e.block)), style: Lume.s(13, color: Lume.muted)),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

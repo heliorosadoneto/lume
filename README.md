@@ -1,10 +1,14 @@
 <p align="center">
+  <img src="assets/logo/lume.png" width="96" alt="Ícone do Lume: uma lua feita de páginas e um vaga-lume">
+</p>
+
+<p align="center">
   <img src="docs/screenshots/01_biblioteca.png" width="220" alt="Biblioteca do Lume">
 </p>
 
 <h1 align="center">Lume</h1>
 
-<p align="center"><strong>Seu leitor de EPUB e PDF, calmo e offline.</strong><br>
+<p align="center"><strong>Seu leitor de EPUB, PDF e TXT, calmo e offline.</strong><br>
 Abra o livro, continue de onde parou, grife o que importa.</p>
 
 <p align="center">
@@ -24,7 +28,7 @@ Abra o livro, continue de onde parou, grife o que importa.</p>
 
 ## Por que o Lume
 
-O Lume é um leitor para o celular, no espírito de um Kindle, feito para ler com calma. Não tem loja, não tem anúncios e não pede conta. Você aponta uma pasta com os seus EPUBs e PDFs, e o Lume procura também nas subpastas (ou importe um arquivo), e a biblioteca aparece em lista, com capa, título, autor e o quanto você já leu.
+O Lume é um leitor para o celular, no espírito de um Kindle, feito para ler com calma. Não tem loja, não tem anúncios e não pede conta. Na primeira abertura o Lume cria a sua pasta, **Documentos/Lume**. Toque em **Importar** para copiar para ela os seus EPUBs, PDFs e TXTs (vários de uma vez), ou aponte outra pasta que você já tenha. A biblioteca aparece em lista, com capa, título, autor e o quanto você já leu.
 
 Na primeira abertura há livros de demonstração em domínio público (Machado de Assis e José de Alencar), só para você ver o app funcionando. Depois, use a sua própria pasta.
 
@@ -36,9 +40,49 @@ O APK de release fica neste repositório:
 
 1. Baixe o arquivo no celular Android (7 ou mais novo).
 2. Abra-o e permita **instalar apps desta fonte** quando o sistema pedir.
-3. Abra o **Lume**, toque em **Ajustes** e escolha a **pasta de livros**, ou use o **+** para escolher uma pasta ou importar um EPUB ou PDF.
+3. Abra o **Lume** e toque em **Importar** para copiar os seus livros para a pasta do Lume, ou use o **+** para escolher outra pasta.
 
 A chave de assinatura fica só na máquina que gera o APK (`android/key.properties`) e **não** entra no git. Guarde um backup dessa chave: sem ela, uma atualização futura não pode ser instalada por cima desta.
+
+## Próxima versão (1.3, em aprovação): pasta do Lume, Importar, TXT e ícone novo
+
+> Ainda sem APK. Estas telas são para aprovação.
+
+**A pasta do Lume.** Na primeira abertura o Lume cria uma pasta só dele:
+
+1. **Documentos/Lume** (`/storage/emulated/0/Documents/Lume`), à vista em qualquer gerenciador de arquivos. É o padrão.
+2. Se o Android não deixar criar a pasta em Documentos, ela fica na pasta do app: **Android/data/com.helio.lume/files/Livros**. *Ajustes* explica onde ela está e oferece **Usar Documentos/Lume** (pede o “Acesso a todos os arquivos” e muda os livros de lugar). Atenção: o Android apaga essa pasta se você desinstalar o Lume, e alguns gerenciadores de arquivos a escondem.
+3. Em último caso, a pasta interna do app (invisível fora dele).
+
+O caminho aparece em *Ajustes → Pasta do Lume* e no topo da biblioteca. Livros importados antes vão sozinhos para a pasta nova.
+
+**Importar.** O botão **Importar** (e o **+ → Importar livros**) abre o seletor do Android com **vários arquivos de uma vez** (EPUB, PDF ou TXT). O Lume **copia** os arquivos para a pasta do Lume, mostra o progresso (*Importando 2 de 5…*, MB copiados) e um resumo. Se já existir um arquivo com o mesmo nome e outro conteúdo, a cópia vira `nome (2).pdf`; se o conteúdo for idêntico (mesmo hash), o arquivo é pulado como *Já estava na pasta*. Os livros aparecem na hora.
+
+**Arquivos colocados pelo gerenciador.** A pasta do Lume é relida ao abrir o app e ao voltar para ele (e vigiada enquanto ele está aberto), com subpastas. No Android 11 ou mais novo, para ver arquivos que *outro* app colocou em Documentos/Lume, o Lume precisa do “Acesso a todos os arquivos” (botão **Liberar acesso** em *Ajustes*); o que o próprio Lume importou aparece sempre.
+
+**Outra pasta.** Continua dando para escolher uma pasta qualquer (*Usar outra pasta*): os livros dela são lidos onde estão, sem cópia, junto com os da pasta do Lume.
+
+**TXT.** Arquivos `.txt` abrem no leitor de texto, com fonte, temas, destaques e notas. O Lume reconhece UTF-8 (com ou sem BOM), UTF-16 com BOM e, se não for UTF-8, Latin-1/Windows-1252. Parágrafos são separados por linha em branco, títulos como *CAPÍTULO I* viram sumário e o cabeçalho e a licença do Project Gutenberg ficam de fora do texto.
+
+**Ícone novo.** Uma lua feita de páginas com um vaga-lume, sobre terracota: ícone adaptativo (fundo `#D46950`, lua dentro da zona segura), versões redonda e quadrada, camada monocromática para os ícones temáticos do Android 13, splash e tela *Sobre*. Gerado por `tool/make_icon.py` a partir de `branding/lume-logo.jpg`.
+
+| Biblioteca com Importar | Importando | Resumo |
+|---|---|---|
+| <img src="docs/screenshots/29_biblioteca_importar.png" width="230" alt="Biblioteca com o botão Importar"> | <img src="docs/screenshots/31_importando.png" width="230" alt="Importando 2 de 5"> | <img src="docs/screenshots/32_importado.png" width="230" alt="4 livros importados, 1 já estava na pasta"> |
+
+| Depois de importar | Pasta do Lume em Ajustes | Pasta do app (alternativa) |
+|---|---|---|
+| <img src="docs/screenshots/33_biblioteca_depois.png" width="230" alt="Biblioteca com EPUB, PDF e TXT"> | <img src="docs/screenshots/34_ajustes_pasta_lume.png" width="230" alt="Pasta do Lume em Documentos e outra pasta"> | <img src="docs/screenshots/35_ajustes_pasta_app.png" width="230" alt="Explicação da pasta do app"> |
+
+| TXT no leitor | Botão + | Sobre |
+|---|---|---|
+| <img src="docs/screenshots/37_txt_leitor.png" width="230" alt="Iracema em TXT no leitor"> | <img src="docs/screenshots/30_adicionar_livros.png" width="230" alt="Importar livros, usar outra pasta"> | <img src="docs/screenshots/36_sobre.png" width="230" alt="Tela Sobre com o ícone"> |
+
+| Ícone no celular | Splash |
+|---|---|
+| <img src="docs/screenshots/38_icone_launcher.png" width="230" alt="Ícone na tela inicial e na gaveta de apps"> | <img src="docs/screenshots/39_splash.png" width="230" alt="Splash terracota com a lua"> |
+
+A prévia do ícone e da splash é desenhada por `tool/make_icon_previews.py`; as outras são telas reais do app (testes de golden).
 
 ## Novidades da versão 1.1: PDF e pasta inteira
 
@@ -92,11 +136,13 @@ Há ainda o tema verde claro e a aba de marcadores (`docs/screenshots/06_leitor_
 
 ## O que o app faz
 
-- **Biblioteca em lista.** Capa (a do EPUB ou a primeira página do PDF), título, autor, etiqueta EPUB ou PDF, subpasta de onde veio, número de páginas do PDF, barra de progresso ou a etiqueta *Novo*. Filtro *Todos · PDF · EPUB*. Puxe para baixo para atualizar.
+- **Biblioteca em lista.** Capa (a do EPUB ou a primeira página do PDF), título, autor, etiqueta EPUB, PDF ou TXT, pasta de onde veio, número de páginas do PDF, barra de progresso ou a etiqueta *Novo*. Filtro *Todos · PDF · EPUB · TXT*. Puxe para baixo para atualizar.
 - **Continuar leitura.** Uma prateleira no topo com os livros em andamento, do mais recente para o mais antigo.
-- **Pasta de livros.** No **+** (ou em *Ajustes*) você escolhe uma pasta do celular. O Lume procura arquivos `.epub` e `.pdf` nela e em todas as subpastas, mostra o progresso (*Encontrados 34 livros…*), ignora o resto e não lista o mesmo livro duas vezes (mesmo arquivo com outro nome também conta como repetido). Os arquivos não são copiados: ficam onde estão. O caminho fica salvo e **Atualizar pasta** pega os livros novos.
+- **Pasta do Lume.** Criada na primeira abertura (Documentos/Lume, ou a pasta do app). Tudo o que você importa vai para lá, e o que você colocar nela pelo gerenciador de arquivos também entra na biblioteca.
+- **Outra pasta.** No **+** (ou em *Ajustes*) você escolhe uma pasta do celular. O Lume procura arquivos `.epub`, `.pdf` e `.txt` nela e em todas as subpastas, mostra o progresso (*Encontrados 34 livros…*), ignora o resto e não lista o mesmo livro duas vezes (mesmo arquivo com outro nome também conta como repetido). Os arquivos não são copiados: ficam onde estão. O caminho fica salvo e **Atualizar pasta** pega os livros novos.
 - **Atualizar automaticamente.** Com a opção ligada, livros novos na pasta entram sozinhos na biblioteca. A pasta também é relida quando o app volta à tela.
-- **Importar.** O botão **+** também copia um EPUB ou PDF avulso para a pasta do app, se você preferir não usar uma pasta compartilhada.
+- **Importar.** O botão **Importar** copia vários EPUBs, PDFs ou TXTs de uma vez para a pasta do Lume, com progresso; nomes iguais viram `nome (2)` e arquivos idênticos são pulados.
+- **TXT.** Texto puro no mesmo leitor dos EPUBs, com UTF-8 ou Latin-1 reconhecidos sozinhos.
 - **Retomar a posição.** Cada livro guarda o parágrafo e o ponto da leitura. Ao reabrir, você volta exatamente dali.
 - **Marca-texto.** Selecione um trecho e escolha amarelo, laranja, rosa ou azul (como no Kindle). Dá para anexar uma nota, copiar ou remover. Destaques com nota ficam sublinhados. Tudo é salvo no celular.
 - **Caderno.** Lista os destaques (com filtro por cor) e os marcadores. Tocar num item salta para aquele trecho. Dá para editar a nota, mudar a cor ou apagar.
@@ -112,7 +158,9 @@ Loja de livros e conta na nuvem ficam de fora.
 
 ```mermaid
 flowchart LR
-  A[Pasta no celular<br>ou arquivo importado] --> B[Lume]
+  I[Importar] --> L[Documentos/Lume]
+  L --> B[Lume]
+  A[Outra pasta<br>opcional] --> B
   B --> C[Biblioteca]
   C --> D[Leitor EPUB]
   C --> P[Leitor PDF<br>PDFium via pdfrx]
@@ -130,13 +178,18 @@ lib/
   pdf.dart        metadados, identificador e capa do PDF
   pdf_reflow.dart refaz parágrafos a partir das linhas do PDF (modo texto)
   pdf_analysis.dart extrai o texto e as margens com o PDFium e guarda em cache
-  library.dart    lê a pasta (e subpastas) com progresso e junta com os importados
+  txt.dart        lê TXT (UTF-8, UTF-16, Latin-1/cp1252), parágrafos e capítulos
+  importer.dart   copia para a pasta do Lume (nome (2), repetidos por hash, progresso)
+  lume_folder.dart escolhe e cria a pasta do Lume (Documentos/Lume ou a do app)
+  library.dart    lê a pasta do Lume e a outra pasta (e subpastas) com progresso
   store.dart      guarda posição, destaques, marcadores e preferências
   screens/        biblioteca, leitores EPUB e PDF, pasta, caderno, aparência e ajustes
 assets/fonts/     Literata, Lora e Source Sans 3 (licença SIL OFL)
-demo_folder/      4 EPUBs e, em pdf/, 3 PDFs de exemplo para copiar ao celular
+demo_folder/      4 EPUBs, 3 PDFs (pdf/) e 1 TXT (txt/) de exemplo para copiar ao celular
+assets/logo/      ícone do app usado no Sobre
+branding/         logo original (fonte do ícone)
 docs/screenshots/ prints das telas
-tool/             gerador dos PDFs de exemplo
+tool/             geradores dos PDFs de exemplo, do ícone e da prévia do ícone
 releases/         APK de release
 ```
 
@@ -165,14 +218,16 @@ Para rodar no celular em modo de desenvolvimento:
 flutter run
 ```
 
-Copie a pasta `demo_folder/` para o aparelho e escolha-a em *Ajustes → Pasta de livros*.
+Toque em **Importar** e escolha arquivos de `demo_folder/` copiados para o aparelho, ou escolha a pasta em *Ajustes → Outra pasta*.
 
 O build de release usa `android/key.properties` (ignorado pelo git). Sem esse arquivo, o Gradle usa a chave de debug, só para desenvolvimento.
 
-Para atualizar os prints:
+Para atualizar os prints e o ícone:
 
 ```bash
 flutter test --update-goldens
+python3 tool/make_icon.py            # ícones, splash e assets/logo a partir de branding/lume-logo.jpg
+python3 tool/make_icon_previews.py   # docs/screenshots/38 e 39
 ```
 
 Os testes de PDF usam o PDFium no Linux. O pacote compila uma pequena biblioteca nativa na primeira vez e procura o `clang` no PATH (dá para usar o do Android NDK). A biblioteca do PDFium baixada fica em `.dart_tool/`, e os testes a encontram sozinhos (ou use `PDFIUM_PATH`).
@@ -184,11 +239,13 @@ Os testes de PDF usam o PDFium no Linux. O pacote compila uma pequena biblioteca
 - *Virar página* avança uma tela por toque, sem animação de folha e sem colunas de página.
 - Se o arquivo EPUB for trocado por outra edição, a posição e os destaques podem cair em outro parágrafo (não usamos CFI).
 - O tempo restante no capítulo é uma estimativa (cerca de 1.000 caracteres por minuto).
-- No Android 11 ou mais novo, ler uma pasta qualquer pede *Acesso a todos os arquivos*. Para a Play Store, o caminho natural seria o seletor padrão de pastas do Android (SAF).
+- No Android 11 ou mais novo, ler uma pasta qualquer pede *Acesso a todos os arquivos*. Sem essa permissão, a pasta Documentos/Lume mostra o que o Lume importou, mas não o que outro app colocou lá. Se o aparelho não deixar criar Documentos/Lume, a pasta fica em Android/data/com.helio.lume/files/Livros, que o Android apaga ao desinstalar o app. Para a Play Store, o caminho natural seria o seletor padrão de pastas do Android (SAF).
 - PDF: não há marca-texto nem notas no PDF (só marcadores por página). Também não há busca de texto, e PDFs com senha ainda não abrem.
 - PDF escaneado (só imagem) abre normalmente, mas os temas tingem a imagem também. Para fotos, use *Cores originais da página*.
 - A posição no PDF é salva por página, não pelo ponto exato dentro da página.
 - O título do PDF vem dos metadados quando o dicionário de informações não está comprimido; senão vem do nome do arquivo.
+- TXT: o Lume reconhece UTF-8, UTF-16 com BOM e Latin-1/Windows-1252; outras codificações (UTF-16 sem BOM, Mac Roman…) podem trocar acentos. Títulos são achados por heurística (*Capítulo*, números romanos, linhas curtas em maiúsculas).
+- A pasta do Lume ainda não foi testada num aparelho de verdade, só nos testes.
 - Alguns EPUBs do Project Gutenberg abrem na página de licença em inglês antes do texto do livro.
 
 ## Segurança e privacidade
@@ -202,7 +259,7 @@ Os testes de PDF usam o PDFium no Linux. O pacote compila uma pequena biblioteca
 Livros de exemplo (domínio público), do [Project Gutenberg](https://www.gutenberg.org):
 
 - *Dom Casmurro* (#55752), *Quincas Borba* (#55682) e *Memorias Posthumas de Braz Cubas* (#54829), de Machado de Assis
-- *Iracema* (#67740), de José de Alencar
+- *Iracema* (#67740), de José de Alencar (também em `demo_folder/txt/iracema-trecho.txt`, capítulos I a IV em Windows-1252)
 - PDFs de exemplo (`demo_folder/pdf/`) gerados com `tool/make_sample_pdfs.py` a partir dos textos de *Helena* (#67162), *Esaú e Jacó* (#56737) e *Memorial de Aires* (#55797), de Machado de Assis. A capa é tipográfica, feita para a amostra.
 
 Os arquivos mantêm o cabeçalho e a licença do Project Gutenberg. As fontes Literata, Lora e Source Sans 3 estão sob a SIL Open Font License 1.1 (`assets/fonts/OFL-*.txt`).

@@ -32,11 +32,10 @@ class TocEntry {
   final int block, depth;
 }
 
-enum BookFormat { epub, pdf }
+enum BookFormat { epub, pdf, txt }
 
 class BookMeta {
-  BookMeta(
-      {required this.id, required this.title, required this.author, required this.path, this.cover, this.format = BookFormat.epub});
+  BookMeta({required this.id, required this.title, required this.author, required this.path, this.cover, this.format = BookFormat.epub});
   final String id, title, author, path;
   final BookFormat format;
 
@@ -98,8 +97,7 @@ class EpubException implements Exception {
 }
 
 class Epub {
-  static Iterable<XmlElement> _els(XmlNode n, String local) =>
-      n.descendants.whereType<XmlElement>().where((e) => e.name.local == local);
+  static Iterable<XmlElement> _els(XmlNode n, String local) => n.descendants.whereType<XmlElement>().where((e) => e.name.local == local);
 
   static String? _readText(Archive a, String name) {
     final f = a.findFile(name);
@@ -133,8 +131,7 @@ class Epub {
     final opf = XmlDocument.parse(opfText);
     final opfDir = p.posix.dirname(opfPath) == '.' ? '' : p.posix.dirname(opfPath);
 
-    String first(String local) =>
-        _els(opf, local).map((e) => e.innerText.trim()).firstWhere((t) => t.isNotEmpty, orElse: () => '');
+    String first(String local) => _els(opf, local).map((e) => e.innerText.trim()).firstWhere((t) => t.isNotEmpty, orElse: () => '');
     final title = first('title').split(RegExp(r'\r?\n| / |: ')).first.trim();
     final authors = _els(opf, 'creator').map((e) => _flipName(e.innerText)).where((t) => t.isNotEmpty).toList();
     final ident = first('identifier');
@@ -197,8 +194,7 @@ class Epub {
 
     String dirOf(String path) => p.posix.dirname(path) == '.' ? '' : p.posix.dirname(path);
     final ncxItem = manifest.values.where((e) => e.getAttribute('media-type') == 'application/x-dtbncx+xml').firstOrNull;
-    final navItem =
-        manifest.values.where((e) => (e.getAttribute('properties') ?? '').split(' ').contains('nav')).firstOrNull;
+    final navItem = manifest.values.where((e) => (e.getAttribute('properties') ?? '').split(' ').contains('nav')).firstOrNull;
     if (ncxItem != null) {
       final ncxPath = _join(o.opfDir, ncxItem.getAttribute('href')!);
       final ncxText = _readText(a, ncxPath);

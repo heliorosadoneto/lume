@@ -9,6 +9,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lume/epub.dart';
 import 'package:lume/library.dart';
+import 'package:lume/lume_folder.dart';
 import 'package:lume/screens/library.dart';
 import 'package:lume/screens/notes.dart';
 import 'package:lume/screens/reader.dart';
@@ -18,14 +19,16 @@ import 'package:lume/theme.dart';
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'support/shots.dart';
+
 Widget wrap(Widget w) => MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: Lume.theme(),
-      locale: const Locale('pt', 'BR'),
-      supportedLocales: const [Locale('pt', 'BR')],
-      localizationsDelegates: GlobalMaterialLocalizations.delegates,
-      home: w,
-    );
+  debugShowCheckedModeBanner: false,
+  theme: Lume.theme(),
+  locale: const Locale('pt', 'BR'),
+  supportedLocales: const [Locale('pt', 'BR')],
+  localizationsDelegates: GlobalMaterialLocalizations.delegates,
+  home: w,
+);
 
 final now = DateTime(2026, 11, 11, 8, 30);
 late Book dom;
@@ -43,12 +46,24 @@ Map<String, Object> seedPrefs() {
   final hls = <Highlight>[];
   void hl(int block, int n, HighlightColor c, [String note = '']) {
     final (s, e) = sentence(dom.blocks[block].text, n);
-    hls.add(Highlight(
-        id: '$block-$n', block: block, start: s, end: e, color: c, text: dom.blocks[block].text.substring(s, e), note: note,
-        created: now.subtract(Duration(days: block % 5))));
+    hls.add(
+      Highlight(
+        id: '$block-$n',
+        block: block,
+        start: s,
+        end: e,
+        color: c,
+        text: dom.blocks[block].text.substring(s, e),
+        note: note,
+        created: now.subtract(Duration(days: block % 5)),
+      ),
+    );
   }
 
-  final paras = [for (var i = chapterStart; i < dom.blocks.length; i++) if (dom.blocks[i].kind == BlockKind.paragraph && dom.blocks[i].text.length > 260) i];
+  final paras = [
+    for (var i = chapterStart; i < dom.blocks.length; i++)
+      if (dom.blocks[i].kind == BlockKind.paragraph && dom.blocks[i].text.length > 260) i,
+  ];
   hl(paras[0], 0, HighlightColor.amarelo);
   hl(paras[1], 1, HighlightColor.rosa, 'Bentinho já desconfia de tudo aqui. Voltar a este trecho no fim do livro.');
   hl(paras[2], 0, HighlightColor.azul);
@@ -59,10 +74,11 @@ Map<String, Object> seedPrefs() {
     'folder': folder.path,
     'settings': '{"t":"sepia","f":"literata","s":19,"l":1.6,"m":1,"j":true,"p":false}',
     'pos:${dom.meta.id}': '{"b":$chapterStart,"a":0.0,"p":${dom.progressAt(chapterStart)},"o":${now.millisecondsSinceEpoch}}',
-    'pos:${ids['memorias-postumas-bras-cubas']}':
-        '{"b":900,"a":0.0,"p":0.61,"o":${now.subtract(const Duration(days: 1)).millisecondsSinceEpoch}}',
-    'hl:${dom.meta.id}': '[${hls.map((h) => '{"id":"${h.id}","b":${h.block},"s":${h.start},"e":${h.end},"c":"${h.color.name}","t":"","n":"${h.note}","d":${h.created.millisecondsSinceEpoch}}').join(',')}]',
-    'bm:${dom.meta.id}': '[{"b":$chapterStart,"x":"${dom.blocks[chapterStart + 2].text.substring(0, 90)}…","d":${now.millisecondsSinceEpoch}},{"b":42,"x":"Ia a entrar na sala de visitas, quando ouvi proferir o meu nome e escondi-me atrás da porta.","d":${now.millisecondsSinceEpoch}}]',
+    'pos:${ids['memorias-postumas-bras-cubas']}': '{"b":900,"a":0.0,"p":0.61,"o":${now.subtract(const Duration(days: 1)).millisecondsSinceEpoch}}',
+    'hl:${dom.meta.id}':
+        '[${hls.map((h) => '{"id":"${h.id}","b":${h.block},"s":${h.start},"e":${h.end},"c":"${h.color.name}","t":"","n":"${h.note}","d":${h.created.millisecondsSinceEpoch}}').join(',')}]',
+    'bm:${dom.meta.id}':
+        '[{"b":$chapterStart,"x":"${dom.blocks[chapterStart + 2].text.substring(0, 90)}…","d":${now.millisecondsSinceEpoch}},{"b":42,"x":"Ia a entrar na sala de visitas, quando ouvi proferir o meu nome e escondi-me atrás da porta.","d":${now.millisecondsSinceEpoch}}]',
   };
 }
 
@@ -74,7 +90,16 @@ Future<void> resetPrefs() async {
   final h = Store.highlights(dom.meta.id);
   Store.saveHighlights(dom.meta.id, [
     for (final x in h)
-      Highlight(id: x.id, block: x.block, start: x.start, end: x.end, color: x.color, text: dom.blocks[x.block].text.substring(x.start, x.end), note: x.note, created: x.created)
+      Highlight(
+        id: x.id,
+        block: x.block,
+        start: x.start,
+        end: x.end,
+        color: x.color,
+        text: dom.blocks[x.block].text.substring(x.start, x.end),
+        note: x.note,
+        created: x.created,
+      ),
   ]);
 }
 
@@ -95,8 +120,7 @@ void phone(WidgetTester t) {
   addTearDown(t.view.reset);
 }
 
-Future<void> snap(String name) =>
-    expectLater(find.byType(MaterialApp), matchesGoldenFile('../docs/screenshots/$name.png'));
+Future<void> snap(String name) => snapShot(name);
 
 void main() {
   setUpAll(() async {
@@ -115,7 +139,7 @@ void main() {
 
     final tmp = Directory.systemTemp.createTempSync('lume');
     folder = Directory(p.join(tmp.path, 'storage', 'emulated', '0', 'Livros'))..createSync(recursive: true);
-    importDir = Directory(p.join(tmp.path, 'importados'))..createSync();
+    importDir = Directory(p.join(tmp.path, 'storage', 'emulated', '0', 'Documents', 'Lume'))..createSync(recursive: true);
     for (final f in Directory('demo_folder').listSync().whereType<File>()) {
       f.copySync(p.join(folder.path, p.basename(f.path)));
       ids[p.basenameWithoutExtension(f.path)] = Epub.readMeta(f.path).id;
@@ -128,7 +152,7 @@ void main() {
   setUp(resetPrefs);
 
   Future<Library> library() async {
-    final lib = Library(importDir);
+    final lib = Library(importDir, lumeKind: LumeFolderKind.documents);
     await lib.load(useIsolate: false);
     return lib;
   }
@@ -168,13 +192,13 @@ void main() {
     expect(lib.books.length, 4);
     final sub = Directory(p.join(folder.path, 'poesia'))..createSync();
     File('test/fixtures/os-lusiadas.epub').copySync(p.join(sub.path, 'os-lusiadas.epub'));
-    File(p.join(folder.path, 'notas.txt')).writeAsStringSync('não é livro');
+    File(p.join(folder.path, 'notas.docx')).writeAsStringSync('não é livro');
     await lib.load(useIsolate: false);
     expect(lib.books.length, 5);
     expect(lib.books.map((b) => b.meta.title), contains('Os Lusíadas'));
     sub.deleteSync(recursive: true);
     File(p.join(folder.path, 'iracema-copia.epub')).deleteSync();
-    File(p.join(folder.path, 'notas.txt')).deleteSync();
+    File(p.join(folder.path, 'notas.docx')).deleteSync();
   });
 
   testWidgets('Leitor sépia retoma a posição e mostra destaques', (t) async {
@@ -218,7 +242,11 @@ void main() {
     final edit = t.state<EditableTextState>(find.descendant(of: target, matching: find.byType(EditableText)));
     final (s, e) = sentence(dom.blocks[46].text, 0);
     edit.userUpdateTextEditingValue(
-        edit.textEditingValue.copyWith(selection: TextSelection(baseOffset: s, extentOffset: e)), SelectionChangedCause.drag);
+      edit.textEditingValue.copyWith(
+        selection: TextSelection(baseOffset: s, extentOffset: e),
+      ),
+      SelectionChangedCause.drag,
+    );
     edit.showToolbar();
     await t.pumpAndSettle();
     expect(find.byKey(const ValueKey('hl-toolbar')), findsOneWidget);
@@ -292,4 +320,3 @@ void main() {
     expect(t.state<ReaderScreenState>(find.byType(ReaderScreen)).current, greaterThan(100));
   });
 }
-

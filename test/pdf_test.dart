@@ -28,11 +28,12 @@ void main() {
   });
 
   test('Strings PDF: escapes, octal, hex UTF-16 e XMP', () {
-    expect(PdfMeta.infoFrom('trailer << /Info 7 0 R >>\n7 0 obj << /Title (Mem\\363rias \\(1881\\)) /Author <FEFF00C9007300610075> >> endobj').title,
-        'Memórias (1881)');
+    expect(
+      PdfMeta.infoFrom('trailer << /Info 7 0 R >>\n7 0 obj << /Title (Mem\\363rias \\(1881\\)) /Author <FEFF00C9007300610075> >> endobj').title,
+      'Memórias (1881)',
+    );
     expect(PdfMeta.infoFrom('trailer << /Info 7 0 R >>\n7 0 obj << /Author <FEFF00C9007300610075> >> endobj').author, 'Ésau');
-    expect(PdfMeta.infoFrom('<x:xmpmeta><dc:title><rdf:Alt><rdf:li xml:lang="x-default">Iracema</rdf:li></rdf:Alt></dc:title></x:xmpmeta>').title,
-        'Iracema');
+    expect(PdfMeta.infoFrom('<x:xmpmeta><dc:title><rdf:Alt><rdf:li xml:lang="x-default">Iracema</rdf:li></rdf:Alt></dc:title></x:xmpmeta>').title, 'Iracema');
   });
 
   test('Mesmo PDF com outro nome tem o mesmo identificador', () {
@@ -46,7 +47,8 @@ void main() {
     final f = File(p.join(Directory.systemTemp.createTempSync('lumepdf').path, 'falso.pdf'))..writeAsStringSync('olá');
     expect(() => PdfMeta.read(f.path), throwsA(isA<EpubException>()));
     expect(Library.isBook('a/B.PDF'), isTrue);
-    expect(Library.isBook('a/b.txt'), isFalse);
+    expect(Library.isBook('a/b.txt'), isTrue);
+    expect(Library.isBook('a/b.docx'), isFalse);
   });
 
   test('Filtro de tema: branco é original; preto inverte o papel', () {
