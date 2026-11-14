@@ -1,6 +1,6 @@
 // Biblioteca: livros da pasta do Lume (Documentos/Lume, para onde o "Importar"
 // copia) + livros encontrados na pasta escolhida pelo usuário (e em todas as
-// subpastas), com atualização automática. Aceita EPUB, PDF e TXT.
+// subpastas), com atualização automática. Aceita EPUB, PDF, TXT e Markdown.
 import 'dart:async';
 import 'dart:io';
 
@@ -13,6 +13,7 @@ import 'importer.dart';
 import 'lume_folder.dart';
 import 'pdf.dart';
 import 'store.dart';
+import 'markdown_book.dart';
 import 'txt.dart';
 
 enum BookSource { folder, imported }
@@ -30,9 +31,9 @@ class LibraryBook {
 
 /// Resumo da última leitura da pasta.
 class ScanReport {
-  const ScanReport({this.epub = 0, this.pdf = 0, this.txt = 0, this.failed = 0, this.duplicates = 0});
-  final int epub, pdf, txt, failed, duplicates;
-  int get total => epub + pdf + txt;
+  const ScanReport({this.epub = 0, this.pdf = 0, this.txt = 0, this.md = 0, this.failed = 0, this.duplicates = 0});
+  final int epub, pdf, txt, md, failed, duplicates;
+  int get total => epub + pdf + txt + md;
 }
 
 typedef _MetaResult = ({List<BookMeta> metas, List<String> failed});
@@ -125,6 +126,8 @@ class Library extends ChangeNotifier {
       try {
         if (TxtBook.isTxt(path)) {
           metas.add(TxtBook.readMeta(path));
+        } else if (MarkdownBook.isMarkdown(path)) {
+          metas.add(MarkdownBook.readMeta(path));
         } else if (path.toLowerCase().endsWith('.pdf')) {
           final m = PdfMeta.read(path);
           final c = covers.fileFor(m.id);
@@ -199,6 +202,7 @@ class Library extends ChangeNotifier {
       epub: list.where((b) => b.meta.format == BookFormat.epub).length,
       pdf: list.where((b) => b.meta.isPdf).length,
       txt: list.where((b) => b.meta.format == BookFormat.txt).length,
+      md: list.where((b) => b.meta.format == BookFormat.md).length,
       failed: fails.length,
       duplicates: dups,
     );

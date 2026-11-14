@@ -1,5 +1,5 @@
 name: lume
-description: "Lume — leitor de EPUB e PDF calmo e offline."
+description: "Lume — leitor de EPUB, PDF, TXT e Markdown calmo e offline."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -47,6 +47,8 @@ dependencies:
     sdk: flutter
   pdfrx: ^2.12.0
   crypto: ^3.0.8
+  markdown: ^7.3.1
+  url_launcher: ^6.3.3
 
 dev_dependencies:
   flutter_test:
@@ -86,6 +88,9 @@ flutter:
     - family: SourceSans3
       fonts:
         - asset: assets/fonts/SourceSans3.ttf
+    - family: SourceCodePro
+      fonts:
+        - asset: assets/fonts/SourceCodePro.ttf
 
   # To add assets to your application, add an assets section, like this:
   # assets:

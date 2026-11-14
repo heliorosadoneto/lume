@@ -78,7 +78,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       const SizedBox(height: 3),
                       Text(friendlyPath(lib.importDir.path), style: Lume.s(14, h: 1.3)),
                       const SizedBox(height: 4),
-                      Text('$inLume ${inLume == 1 ? 'livro' : 'livros'} (PDF, EPUB e TXT)', style: Lume.s(13.5, color: Lume.accent, w: 600)),
+                      Text('$inLume ${inLume == 1 ? 'livro' : 'livros'} (PDF, EPUB, TXT e MD)', style: Lume.s(13.5, color: Lume.accent, w: 600)),
                     ],
                   ),
                 ),
@@ -228,7 +228,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(4, 10, 4, 0),
                 child: Text(
-                  'O Lume lê EPUB e TXT (texto que se ajusta à tela) e PDF (modo texto ou páginas como no original). '
+                  'O Lume lê EPUB, TXT e Markdown (texto que se ajusta à tela) e PDF (modo texto ou páginas como no original). '
                   '“Importar” copia para a pasta do Lume; os livros da outra pasta não são copiados, ficam onde estão.',
                   style: Lume.s(13.5, color: Lume.muted),
                 ),

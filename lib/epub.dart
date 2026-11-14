@@ -11,18 +11,55 @@ import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart';
 
 class Run {
-  const Run(this.text, {this.italic = false, this.bold = false});
+  const Run(this.text, {this.italic = false, this.bold = false, this.code = false, this.strike = false, this.link});
   final String text;
   final bool italic, bold;
+
+  /// Markdown: código em linha (monoespaçado), riscado e link (endereço).
+  final bool code, strike;
+  final String? link;
 }
 
-enum BlockKind { heading, paragraph, separator }
+/// listItem, code, image e table vêm do Markdown; EPUB, PDF e TXT usam só os três primeiros.
+enum BlockKind { heading, paragraph, separator, listItem, code, image, table }
 
 class Block {
-  Block(this.kind, this.runs, {this.level = 0});
+  Block(
+    this.kind,
+    this.runs, {
+    this.level = 0,
+    this.quote = 0,
+    this.indent = 0,
+    this.marker = '',
+    this.anchor,
+    this.src,
+    this.rows,
+    this.aligns,
+    this.center = true,
+  });
   final BlockKind kind;
   final List<Run> runs;
   final int level;
+
+  /// Profundidade de citação (> no Markdown): desenha a barra à esquerda.
+  final int quote;
+
+  /// Nível da lista (0 = primeiro) e o marcador ("•", "1.", "☑").
+  final int indent;
+  final String marker;
+
+  /// Âncora do título (#como-usar), para links internos.
+  final String? anchor;
+
+  /// Imagem: caminho absoluto do arquivo local (ou o endereço original, se não for local).
+  final String? src;
+
+  /// Tabela: linhas (a primeira é o cabeçalho) e alinhamento das colunas ('left', 'center', 'right').
+  final List<List<String>>? rows;
+  final List<String?>? aligns;
+
+  /// Título centralizado (EPUB, TXT) ou alinhado à esquerda (Markdown).
+  final bool center;
   late final String text = runs.map((r) => r.text).join();
 }
 
@@ -32,7 +69,7 @@ class TocEntry {
   final int block, depth;
 }
 
-enum BookFormat { epub, pdf, txt }
+enum BookFormat { epub, pdf, txt, md }
 
 class BookMeta {
   BookMeta({required this.id, required this.title, required this.author, required this.path, this.cover, this.format = BookFormat.epub});

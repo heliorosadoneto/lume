@@ -42,7 +42,7 @@ class StorageAccessDialog extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         for (final t in [
-          'O Lume só abre arquivos .pdf, .epub e .txt.',
+          'O Lume só abre arquivos .pdf, .epub, .txt e .md.',
           'Nada sai do celular: o app não usa internet.',
           'Você pode tirar a permissão nos ajustes do Android.',
         ])

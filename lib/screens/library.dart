@@ -67,7 +67,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
         final cont = lib.continueReading;
         final pdfs = lib.books.where((b) => b.meta.isPdf).length;
         final txts = lib.books.where((b) => b.meta.format == BookFormat.txt).length;
-        final epubs = lib.books.length - pdfs - txts;
+        final mds = lib.books.where((b) => b.meta.format == BookFormat.md).length;
+        final epubs = lib.books.length - pdfs - txts - mds;
         final shown = filter == null ? lib.books : lib.books.where((b) => b.meta.format == filter).toList();
         return Scaffold(
           floatingActionButton: FloatingActionButton.extended(
@@ -127,7 +128,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 SliverToBoxAdapter(
                   child: _FolderBanner(library: lib, onTap: _settings),
                 ),
-                if ([pdfs, txts, epubs].where((n) => n > 0).length > 1)
+                if ([pdfs, txts, mds, epubs].where((n) => n > 0).length > 1)
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
@@ -136,9 +137,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
                         children: [
                           for (final (f, label, n) in [
                             (null, 'Todos', lib.books.length),
-                            (BookFormat.pdf, 'PDF', pdfs),
-                            (BookFormat.epub, 'EPUB', epubs),
+                            if (pdfs > 0) (BookFormat.pdf, 'PDF', pdfs),
+                            if (epubs > 0) (BookFormat.epub, 'EPUB', epubs),
                             if (txts > 0) (BookFormat.txt, 'TXT', txts),
+                            if (mds > 0) (BookFormat.md, 'MD', mds),
                           ])
                             ChoiceChip(
                               key: ValueKey('filter-${f?.name ?? 'todos'}'),
@@ -378,7 +380,7 @@ class _EmptyLibrary extends StatelessWidget {
         Text('Sua estante está vazia', style: Lume.s(21, w: 650, family: Lume.serif)),
         const SizedBox(height: 8),
         Text(
-          'Importe seus PDFs, EPUBs e TXTs para a pasta do Lume ou escolha uma pasta onde eles já estão (o Lume olha as subpastas também).',
+          'Importe seus PDFs, EPUBs, TXTs e Markdown para a pasta do Lume ou escolha uma pasta onde eles já estão (o Lume olha as subpastas também).',
           textAlign: TextAlign.center,
           style: Lume.s(15.5, color: Lume.muted),
         ),
@@ -401,6 +403,7 @@ class FormatBadge extends StatelessWidget {
       BookFormat.pdf => 'PDF',
       BookFormat.epub => 'EPUB',
       BookFormat.txt => 'TXT',
+      BookFormat.md => 'MD',
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
@@ -442,7 +445,7 @@ class AddBooksSheet extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
             child: Text('Adicionar livros', style: Lume.s(22, w: 650, family: Lume.serif)),
           ),
-          opt('file', Icons.file_download_outlined, 'Importar livros', 'PDF, EPUB ou TXT (vários de uma vez), copiados para a pasta do Lume'),
+          opt('file', Icons.file_download_outlined, 'Importar livros', 'PDF, EPUB, TXT ou Markdown (vários de uma vez), copiados para a pasta do Lume'),
           opt(
             'folder',
             Icons.create_new_folder_outlined,

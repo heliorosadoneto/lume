@@ -8,7 +8,7 @@
 
 <h1 align="center">Lume</h1>
 
-<p align="center"><strong>Seu leitor de EPUB, PDF e TXT, calmo e offline.</strong><br>
+<p align="center"><strong>Seu leitor de EPUB, PDF, TXT e Markdown, calmo e offline.</strong><br>
 Abra o livro, continue de onde parou, grife o que importa.</p>
 
 <p align="center">
@@ -44,7 +44,7 @@ O APK de release fica neste repositório:
 
 A chave de assinatura fica só na máquina que gera o APK (`android/key.properties`) e **não** entra no git. Guarde um backup dessa chave: sem ela, uma atualização futura não pode ser instalada por cima desta.
 
-## Próxima versão (1.3, em aprovação): pasta do Lume, Importar, TXT e ícone novo
+## Próxima versão (1.3, em aprovação): pasta do Lume, Importar, TXT, Markdown e ícone novo
 
 > Ainda sem APK. Estas telas são para aprovação.
 
@@ -64,6 +64,8 @@ O caminho aparece em *Ajustes → Pasta do Lume* e no topo da biblioteca. Livros
 
 **TXT.** Arquivos `.txt` abrem no leitor de texto, com fonte, temas, destaques e notas. O Lume reconhece UTF-8 (com ou sem BOM), UTF-16 com BOM e, se não for UTF-8, Latin-1/Windows-1252. Parágrafos são separados por linha em branco, títulos como *CAPÍTULO I* viram sumário e o cabeçalho e a licença do Project Gutenberg ficam de fora do texto.
 
+**Markdown.** Arquivos `.md` e `.markdown` entram no Importar, na pasta do Lume e na outra pasta, com o filtro *MD* na biblioteca. O título vem do cabeçalho YAML (`title:`), do primeiro título `#` ou do nome do arquivo. O texto abre formatado no mesmo leitor dos EPUBs (fonte, tamanho, temas, destaques, notas e posição salva): títulos (que também formam o sumário), negrito, itálico, riscado, listas (numeradas, com níveis e de tarefas), citações, código em linha e blocos de código em fonte monoespaçada (com rolagem lateral), linhas horizontais, tabelas e imagens locais (o caminho é relativo à pasta do `.md`; se a imagem não existir, aparece um aviso no lugar). Links para `#seções` saltam no texto; links da internet abrem no navegador depois de uma confirmação. A leitura usa o pacote [markdown](https://pub.dev/packages/markdown) (licença BSD).
+
 **Ícone novo.** Uma lua feita de páginas com um vaga-lume, sobre terracota: ícone adaptativo (fundo `#D46950`, lua dentro da zona segura), versões redonda e quadrada, camada monocromática para os ícones temáticos do Android 13, splash e tela *Sobre*. Gerado por `tool/make_icon.py` a partir de `branding/lume-logo.jpg`.
 
 | Biblioteca com Importar | Importando | Resumo |
@@ -81,6 +83,16 @@ O caminho aparece em *Ajustes → Pasta do Lume* e no topo da biblioteca. Livros
 | Ícone no celular | Splash |
 |---|---|
 | <img src="docs/screenshots/38_icone_launcher.png" width="230" alt="Ícone na tela inicial e na gaveta de apps"> | <img src="docs/screenshots/39_splash.png" width="230" alt="Splash terracota com a lua"> |
+
+| Biblioteca com um .md | Markdown aberto | Tabela e imagem |
+|---|---|---|
+| <img src="docs/screenshots/40_biblioteca_md.png" width="230" alt="Biblioteca com o filtro MD"> | <img src="docs/screenshots/41_md_leitor.png" width="230" alt="Títulos, listas e citação"> | <img src="docs/screenshots/42_md_tabela_imagem.png" width="230" alt="Tabela e imagem local"> |
+
+| Código e tarefas | Tema preto | Destaques e nota |
+|---|---|---|
+| <img src="docs/screenshots/43_md_codigo.png" width="230" alt="Bloco de código e lista de tarefas"> | <img src="docs/screenshots/44_md_preto.png" width="230" alt="Markdown no tema preto"> | <img src="docs/screenshots/45_md_destaque.png" width="230" alt="Destaques em Markdown"> |
+
+O texto e a imagem do exemplo (`demo_folder/md/`) foram feitos para o Lume. Também há o sumário (`46_md_sumario.png`) e a imagem no tema preto (`47_md_preto_imagem.png`).
 
 A prévia do ícone e da splash é desenhada por `tool/make_icon_previews.py`; as outras são telas reais do app (testes de golden).
 
@@ -179,13 +191,14 @@ lib/
   pdf_reflow.dart refaz parágrafos a partir das linhas do PDF (modo texto)
   pdf_analysis.dart extrai o texto e as margens com o PDFium e guarda em cache
   txt.dart        lê TXT (UTF-8, UTF-16, Latin-1/cp1252), parágrafos e capítulos
+  markdown_book.dart lê Markdown (títulos, listas, citações, código, tabelas, imagens, links)
   importer.dart   copia para a pasta do Lume (nome (2), repetidos por hash, progresso)
   lume_folder.dart escolhe e cria a pasta do Lume (Documentos/Lume ou a do app)
   library.dart    lê a pasta do Lume e a outra pasta (e subpastas) com progresso
   store.dart      guarda posição, destaques, marcadores e preferências
   screens/        biblioteca, leitores EPUB e PDF, pasta, caderno, aparência e ajustes
 assets/fonts/     Literata, Lora e Source Sans 3 (licença SIL OFL)
-demo_folder/      4 EPUBs, 3 PDFs (pdf/) e 1 TXT (txt/) de exemplo para copiar ao celular
+demo_folder/      4 EPUBs, 3 PDFs (pdf/), 1 TXT (txt/) e 1 Markdown com imagem (md/) de exemplo para copiar ao celular
 assets/logo/      ícone do app usado no Sobre
 branding/         logo original (fonte do ícone)
 docs/screenshots/ prints das telas
@@ -244,6 +257,9 @@ Os testes de PDF usam o PDFium no Linux. O pacote compila uma pequena biblioteca
 - PDF escaneado (só imagem) abre normalmente, mas os temas tingem a imagem também. Para fotos, use *Cores originais da página*.
 - A posição no PDF é salva por página, não pelo ponto exato dentro da página.
 - O título do PDF vem dos metadados quando o dicionário de informações não está comprimido; senão vem do nome do arquivo.
+- Markdown: ao importar pelo seletor do Android, só o `.md` é copiado, e as imagens dele não vão junto (o seletor entrega um arquivo de cada vez). Para ver as imagens, coloque o `.md` com a pasta das imagens na pasta do Lume pelo gerenciador de arquivos, ou use *Outra pasta*. Imagens da internet não são baixadas. Links para outros arquivos `.md` ainda não abrem. HTML dentro do Markdown vira texto simples, e notas de rodapé e fórmulas não são formatadas. Um destaque não pega células de tabela nem legendas de imagem.
+- No Android, o seletor do Importar mostra todos os arquivos (o Android não conhece o tipo do `.md` e o esconderia); o que não for EPUB, PDF, TXT ou Markdown aparece como *Formato não suportado* no resumo.
+- Com *Outra pasta*, todos os `.md` dela entram na biblioteca (inclusive `README.md` de projetos, se a pasta tiver).
 - TXT: o Lume reconhece UTF-8, UTF-16 com BOM e Latin-1/Windows-1252; outras codificações (UTF-16 sem BOM, Mac Roman…) podem trocar acentos. Títulos são achados por heurística (*Capítulo*, números romanos, linhas curtas em maiúsculas).
 - A pasta do Lume ainda não foi testada num aparelho de verdade, só nos testes.
 - Alguns EPUBs do Project Gutenberg abrem na página de licença em inglês antes do texto do livro.
@@ -262,7 +278,7 @@ Livros de exemplo (domínio público), do [Project Gutenberg](https://www.gutenb
 - *Iracema* (#67740), de José de Alencar (também em `demo_folder/txt/iracema-trecho.txt`, capítulos I a IV em Windows-1252)
 - PDFs de exemplo (`demo_folder/pdf/`) gerados com `tool/make_sample_pdfs.py` a partir dos textos de *Helena* (#67162), *Esaú e Jacó* (#56737) e *Memorial de Aires* (#55797), de Machado de Assis. A capa é tipográfica, feita para a amostra.
 
-Os arquivos mantêm o cabeçalho e a licença do Project Gutenberg. As fontes Literata, Lora e Source Sans 3 estão sob a SIL Open Font License 1.1 (`assets/fonts/OFL-*.txt`).
+Os arquivos mantêm o cabeçalho e a licença do Project Gutenberg. O exemplo em Markdown (`demo_folder/md/`, texto e imagem) foi escrito e desenhado para o Lume. As fontes Literata, Lora, Source Sans 3 e Source Code Pro estão sob a SIL Open Font License 1.1 (`assets/fonts/OFL-*.txt`).
 
 ## Licença do código
 

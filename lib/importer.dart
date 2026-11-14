@@ -7,7 +7,7 @@ import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as p;
 
 /// Formatos que o Lume abre.
-const bookExtensions = ['epub', 'pdf', 'txt'];
+const bookExtensions = ['epub', 'pdf', 'txt', 'md', 'markdown'];
 
 bool isBookPath(String path) => bookExtensions.contains(p.extension(path).toLowerCase().replaceFirst('.', ''));
 

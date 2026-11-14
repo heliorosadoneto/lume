@@ -6,6 +6,7 @@
 - Botão “Importar” (e “+ → Importar livros”): escolhe vários EPUB, PDF ou TXT de uma vez e copia para a pasta do Lume, com progresso e resumo. Nome repetido vira “nome (2)”; arquivo idêntico (mesmo hash) é pulado.
 - A pasta do Lume é relida ao abrir e ao voltar para o app (com subpastas), então arquivos colocados pelo gerenciador de arquivos aparecem. A outra pasta continua opcional, lida sem cópia.
 - TXT: abre no leitor de texto, com UTF-8, UTF-16 (BOM) e Latin-1/Windows-1252 reconhecidos sozinhos, parágrafos, capítulos no sumário e sem o cabeçalho do Project Gutenberg. Filtro TXT na biblioteca.
+- Markdown (.md e .markdown): no Importar, nas pastas e no filtro MD; título do cabeçalho YAML, do primeiro # ou do nome do arquivo. Abre formatado no leitor de texto (títulos e sumário, negrito, itálico, listas, tarefas, citações, código em fonte monoespaçada, tabelas, linhas, imagens locais com aviso se faltarem), com destaques, notas e posição salva. Links internos saltam; externos abrem depois de confirmar.
 - Ícone novo (lua de páginas com vaga-lume, fundo terracota): ícone adaptativo, redondo, monocromático (Android 13), splash e tela Sobre em Ajustes.
 
 ## 1.2.0 — 13 de novembro de 2026

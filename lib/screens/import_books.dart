@@ -35,7 +35,11 @@ Future<void> moveToDocuments(BuildContext context, Library lib) async {
 }
 
 Future<void> importBooks(BuildContext context, Library lib) async {
-  final files = await FilePicker.pickFiles(dialogTitle: 'Importar livros (PDF, EPUB ou TXT)', type: FileType.custom, allowedExtensions: bookExtensions);
+  // No Android, .md e .markdown não têm tipo MIME conhecido e o filtro do
+  // seletor os esconderia; lá ele mostra tudo e o Lume ignora o que não lê.
+  final files = Platform.isAndroid
+      ? await FilePicker.pickFiles(dialogTitle: 'Importar livros (PDF, EPUB, TXT ou Markdown)', type: FileType.any)
+      : await FilePicker.pickFiles(dialogTitle: 'Importar livros (PDF, EPUB, TXT ou Markdown)', type: FileType.custom, allowedExtensions: bookExtensions);
   final paths = files.map((f) => f.path).whereType<String>().toList();
   if (paths.isEmpty || !context.mounted) return;
   await showImport(context, lib, paths);

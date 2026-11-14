@@ -1,9 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../epub.dart';
+import '../markdown_book.dart';
 import '../store.dart';
 import '../txt.dart';
 import '../theme.dart';
@@ -12,7 +17,7 @@ import 'appearance.dart';
 import 'notes.dart';
 import 'pdf_book.dart';
 
-/// Abre o livro: PDF no modo texto ou de páginas; TXT e EPUB processado fora da thread de interface.
+/// Abre o livro: PDF no modo texto ou de páginas; TXT, Markdown e EPUB processados fora da thread de interface.
 Future<void> openBook(BuildContext context, BookMeta meta) async {
   final messenger = ScaffoldMessenger.of(context);
   if (meta.isPdf) {
@@ -20,7 +25,12 @@ Future<void> openBook(BuildContext context, BookMeta meta) async {
     return;
   }
   try {
-    final book = await compute(meta.format == BookFormat.txt ? TxtBook.parseFile : Epub.parseFile, meta.path);
+    final parse = switch (meta.format) {
+      BookFormat.txt => TxtBook.parseFile,
+      BookFormat.md => MarkdownBook.parseFile,
+      _ => Epub.parseFile,
+    };
+    final book = await compute(parse, meta.path);
     if (!context.mounted) return;
     await Navigator.of(context).push(MaterialPageRoute(builder: (_) => ReaderScreen(book: book)));
   } catch (e) {
@@ -72,7 +82,52 @@ class ReaderScreenState extends State<ReaderScreen> {
   @override
   void dispose() {
     positions.itemPositions.removeListener(_onScroll);
+    for (final r in _links.values) {
+      r.dispose();
+    }
     super.dispose();
+  }
+
+  // ---------- links (Markdown) ----------
+  final _links = <String, TapGestureRecognizer>{};
+
+  TapGestureRecognizer _linkRecognizer(int block, int run, String href) =>
+      _links.putIfAbsent('$block:$run', () => TapGestureRecognizer()..onTap = () => openLink(href));
+
+  /// Link interno (#âncora) salta para o título; externo abre no navegador depois de confirmar.
+  Future<void> openLink(String href) async {
+    final messenger = ScaffoldMessenger.of(context);
+    if (href.startsWith('#')) {
+      final want = Uri.decodeComponent(href.substring(1)).toLowerCase();
+      final i = book.blocks.indexWhere((b) => b.anchor == want);
+      if (i >= 0) {
+        jumpTo(i);
+      } else {
+        messenger.showSnackBar(SnackBar(content: Text('Não achei a seção "$want" neste arquivo.')));
+      }
+      return;
+    }
+    final uri = Uri.tryParse(href);
+    if (uri == null || !const {'http', 'https', 'mailto'}.contains(uri.scheme)) {
+      messenger.showSnackBar(SnackBar(content: Text('O Lume ainda não abre este link: $href')));
+      return;
+    }
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        key: const ValueKey('link-dialog'),
+        backgroundColor: Lume.card,
+        title: Text('Abrir link?', style: Lume.s(20, w: 650, family: Lume.serif)),
+        content: Text('O link abre fora do Lume:\n$href', style: Lume.s(15, h: 1.4)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          FilledButton(key: const ValueKey('link-open'), onPressed: () => Navigator.pop(context, true), child: const Text('Abrir')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication).catchError((_) => false);
+    if (!launched) messenger.showSnackBar(SnackBar(content: Text('Não foi possível abrir $href')));
   }
 
   void _onScroll() {
@@ -308,15 +363,55 @@ class ReaderScreenState extends State<ReaderScreen> {
   TextStyle get _bodyStyle =>
       TextStyle(fontFamily: s.font.family, fontSize: s.size, height: s.lineHeight, color: s.theme.ink, fontVariations: const [FontVariation.weight(400)]);
 
+  /// Barra das citações (> no Markdown) à esquerda do bloco.
+  Widget _quoted(Block b, PageTheme t, Widget child) {
+    if (b.quote == 0) return child;
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: s.hPad),
+      child: Container(
+        padding: EdgeInsets.only(left: 14.0 + 14 * (b.quote - 1)),
+        decoration: BoxDecoration(
+          border: Border(left: BorderSide(color: (t.dark ? Lume.amber : Lume.accent).withValues(alpha: .55), width: 3)),
+        ),
+        child: child,
+      ),
+    );
+  }
+
+  static const mono = 'SourceCodePro';
+  Color _codeBg(PageTheme t) => t.ink.withValues(alpha: t.dark ? .10 : .06);
+
   Widget _block(int i, PageTheme t) {
     final b = book.blocks[i];
-    final pad = EdgeInsets.symmetric(horizontal: s.hPad);
+    final inner = _blockBody(i, b, t, EdgeInsets.symmetric(horizontal: b.quote > 0 ? 0 : s.hPad));
+    return _quoted(b, t, inner);
+  }
+
+  Widget _blockBody(int i, Block b, PageTheme t, EdgeInsets pad) {
     switch (b.kind) {
       case BlockKind.separator:
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 18),
           child: Center(
             child: Text('·  ·  ·', style: Lume.s(16, color: t.muted, ls: 2)),
+          ),
+        );
+      case BlockKind.heading when !b.center:
+        // Markdown: títulos à esquerda, do maior (#) ao menor (######).
+        const scales = [1.55, 1.32, 1.16, 1.05, 1.0, .92];
+        return Padding(
+          padding: pad.add(EdgeInsets.only(top: b.level <= 2 ? 18 : 12, bottom: b.level <= 2 ? 12 : 8)),
+          child: _selectable(
+            i,
+            b,
+            _bodyStyle.copyWith(
+              fontSize: s.size * scales[(b.level - 1).clamp(0, 5)],
+              height: 1.28,
+              fontWeight: FontWeight.w700,
+              fontVariations: const [FontVariation.weight(650)],
+              color: b.level >= 6 ? t.muted : t.ink,
+            ),
+            TextAlign.start,
           ),
         );
       case BlockKind.heading:
@@ -340,13 +435,142 @@ class ReaderScreenState extends State<ReaderScreen> {
       case BlockKind.paragraph:
         return Padding(
           padding: pad.add(EdgeInsets.only(bottom: s.size * 0.75)),
-          child: _selectable(i, b, _bodyStyle, s.justify ? TextAlign.justify : TextAlign.start),
+          child: _selectable(i, b, b.quote > 0 ? _bodyStyle.copyWith(fontStyle: FontStyle.italic) : _bodyStyle, s.justify ? TextAlign.justify : TextAlign.start),
         );
+      case BlockKind.listItem:
+        final next = i + 1 < book.blocks.length ? book.blocks[i + 1] : null;
+        final tight = next != null && next.kind == BlockKind.listItem;
+        return Padding(
+          padding: pad.add(EdgeInsets.only(left: 6.0 + b.indent * s.size * 1.4, bottom: tight ? s.size * .3 : s.size * .75)),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: s.size * 1.6,
+                child: switch (b.marker) {
+                  // tarefas (- [x] / - [ ]): caixa marcada ou vazia
+                  '☑' || '☐' => Padding(
+                    padding: EdgeInsets.only(top: s.size * (s.lineHeight - 1.05) / 2),
+                    child: Icon(
+                      b.marker == '☑' ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded,
+                      size: s.size * 1.05,
+                      color: b.marker == '☑' ? (t.dark ? Lume.amber : Lume.accent) : t.muted,
+                    ),
+                  ),
+                  _ => Text(b.marker, style: _bodyStyle.copyWith(color: b.marker.length == 1 ? (t.dark ? Lume.amber : Lume.accent) : t.ink)),
+                },
+              ),
+              Expanded(child: _selectable(i, b, _bodyStyle, TextAlign.start)),
+            ],
+          ),
+        );
+      case BlockKind.code:
+        return Padding(
+          padding: pad.add(EdgeInsets.only(bottom: s.size * .9)),
+          child: Container(
+            key: ValueKey('code$i'),
+            decoration: BoxDecoration(color: _codeBg(t), borderRadius: BorderRadius.circular(10)),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: _selectable(
+                i,
+                b,
+                TextStyle(fontFamily: mono, fontSize: s.size * .8, height: 1.45, color: t.ink, fontVariations: const [FontVariation.weight(450)]),
+                TextAlign.start,
+              ),
+            ),
+          ),
+        );
+      case BlockKind.image:
+        return Padding(padding: pad.add(EdgeInsets.only(bottom: s.size * .9)), child: _image(i, b, t));
+      case BlockKind.table:
+        return Padding(padding: pad.add(EdgeInsets.only(bottom: s.size * .9)), child: _table(b, t));
     }
   }
 
+  Widget _image(int i, Block b, PageTheme t) {
+    final src = b.src ?? '';
+    final caption = b.text.trim();
+    Widget missing(String why) => Container(
+      key: ValueKey('img-missing$i'),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _codeBg(t),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: t.muted.withValues(alpha: .3)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.image_not_supported_outlined, color: t.muted),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text('$why\n${caption.isEmpty ? src.split('/').last : caption}', style: Lume.s(14, color: t.muted, h: 1.35)),
+          ),
+        ],
+      ),
+    );
+    final remote = RegExp(r'^[a-z][a-z0-9+.-]*:', caseSensitive: false).hasMatch(src);
+    if (remote) return missing('Imagem da internet (o Lume não usa internet)');
+    final f = File(src);
+    if (!f.existsSync()) return missing('Imagem não encontrada');
+    return Column(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.file(
+            f,
+            key: ValueKey('img$i'),
+            fit: BoxFit.contain,
+            errorBuilder: (_, _, _) => missing('Não foi possível abrir a imagem'),
+          ),
+        ),
+        if (caption.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(caption, textAlign: TextAlign.center, style: Lume.s(13.5, color: t.muted, h: 1.3)),
+          ),
+      ],
+    );
+  }
+
+  Widget _table(Block b, PageTheme t) {
+    final rows = b.rows ?? const [];
+    final cols = rows.fold<int>(0, (m, r) => r.length > m ? r.length : m);
+    final line = t.muted.withValues(alpha: .35);
+    TextAlign align(int c) => switch (b.aligns != null && c < b.aligns!.length ? b.aligns![c] : null) {
+      'center' => TextAlign.center,
+      'right' => TextAlign.right,
+      _ => TextAlign.left,
+    };
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Table(
+        defaultColumnWidth: const IntrinsicColumnWidth(),
+        border: TableBorder(horizontalInside: BorderSide(color: line), bottom: BorderSide(color: line), top: BorderSide(color: line)),
+        children: [
+          for (var r = 0; r < rows.length; r++)
+            TableRow(
+              decoration: r == 0 ? BoxDecoration(color: _codeBg(t)) : null,
+              children: [
+                for (var c = 0; c < cols; c++)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    child: Text(
+                      c < rows[r].length ? rows[r][c] : '',
+                      textAlign: align(c),
+                      style: _bodyStyle.copyWith(fontSize: s.size * .85, height: 1.35, fontWeight: r == 0 ? FontWeight.w700 : null),
+                    ),
+                  ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _selectable(int i, Block b, TextStyle style, TextAlign align) {
-    final spans = _spans(b, _hlsFor(i), style);
+    final spans = _spans(i, b, _hlsFor(i), style);
     return SelectableText.rich(
       TextSpan(children: spans, style: style),
       key: ValueKey('block$i'),
@@ -387,7 +611,7 @@ class ReaderScreenState extends State<ReaderScreen> {
     );
   }
 
-  List<InlineSpan> _spans(Block b, List<Highlight> hs, TextStyle base) {
+  List<InlineSpan> _spans(int index, Block b, List<Highlight> hs, TextStyle base) {
     final len = b.text.length;
     final cuts = <int>{0, len};
     var o = 0;
@@ -413,15 +637,27 @@ class ReaderScreenState extends State<ReaderScreen> {
       }
       final run = b.runs[ri];
       final h = hs.lastWhere((h) => h.start <= a && h.end >= z, orElse: () => _none);
+      final hl = !identical(h, _none);
+      final link = run.link;
+      final inlineCode = run.code && b.kind != BlockKind.code;
       out.add(
         TextSpan(
           text: b.text.substring(a, z),
+          recognizer: link == null || link.isEmpty ? null : _linkRecognizer(index, ri, link),
           style: TextStyle(
             fontStyle: run.italic ? FontStyle.italic : null,
             fontWeight: run.bold ? FontWeight.w700 : null,
-            backgroundColor: identical(h, _none) ? null : h.color.on(s.theme),
-            decoration: !identical(h, _none) && h.note.isNotEmpty ? TextDecoration.underline : null,
-            decorationColor: Lume.accent,
+            fontFamily: inlineCode ? mono : null,
+            fontSize: inlineCode ? base.fontSize! * .86 : null,
+            fontVariations: inlineCode ? const [FontVariation.weight(450)] : (run.bold ? const [FontVariation.weight(700)] : null),
+            color: link != null ? (s.theme.dark ? Lume.amber : Lume.accent) : null,
+            backgroundColor: hl ? h.color.on(s.theme) : (inlineCode ? _codeBg(s.theme) : null),
+            decoration: TextDecoration.combine([
+              if (hl && h.note.isNotEmpty) TextDecoration.underline,
+              if (link != null && !(hl && h.note.isNotEmpty)) TextDecoration.underline,
+              if (run.strike) TextDecoration.lineThrough,
+            ]),
+            decorationColor: link != null && !(hl && h.note.isNotEmpty) ? (s.theme.dark ? Lume.amber : Lume.accent).withValues(alpha: .6) : Lume.accent,
             decorationThickness: 1.5,
           ),
         ),
