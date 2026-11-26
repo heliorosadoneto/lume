@@ -65,6 +65,7 @@ Future<void> settle(WidgetTester t, {int rounds = 3}) async {
 Future<Library> freshLibrary(WidgetTester t, {LumeFolderKind kind = LumeFolderKind.documents}) async {
   SharedPreferences.setMockInitialValues({'seeded': true});
   await Store.init();
+  Store.settings = Store.settings..fullscreen = false;
   final base = Directory.systemTemp.createTempSync('lumev3');
   final s = Directory(p.join(base.path, 'storage', 'emulated', '0'));
   final dir = kind == LumeFolderKind.documents
@@ -202,6 +203,7 @@ void main() {
     phone(t);
     SharedPreferences.setMockInitialValues({'seeded': true, 'settings': '{"t":"sepia","f":"literata","s":19,"l":1.6,"m":1,"j":true,"p":false}'});
     await Store.init();
+    Store.settings = Store.settings..fullscreen = false;
     final book = TxtBook.parseFile('demo_folder/txt/iracema-trecho.txt');
     expect(isBookPath(book.meta.path), isTrue);
     await t.pumpWidget(wrap(ReaderScreen(book: book, now: () => now)));

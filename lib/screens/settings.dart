@@ -90,7 +90,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.lock_outline_rounded, size: 12, color: Lume.muted),
+                                Icon(Icons.lock_outline_rounded, size: 12, color: Lume.muted),
                                 const SizedBox(width: 3),
                                 Text('fixa', style: Lume.s(11.5, w: 600, color: Lume.muted)),
                               ],
@@ -112,7 +112,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               key: ValueKey('lume-note-${kind.name}'),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: kind == LumeFolderKind.appExternal ? const Color(0xFFF6E9DF) : const Color(0xFFF1E8D8),
+                color: kind == LumeFolderKind.appExternal ? Lume.tint : Lume.chip,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -156,7 +156,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         key: const ValueKey('remove-folder-dialog'),
-        backgroundColor: const Color(0xFFFBF6EC),
+        backgroundColor: Lume.sheet,
         title: Text('Remover a pasta ${p.basename(f)}?', style: Lume.s(20, w: 650, family: Lume.serif)),
         content: Text(
           'Os livros dela saem da biblioteca, mas nenhum arquivo é apagado. Dá para adicionar a pasta de novo quando quiser.',
@@ -186,7 +186,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               width: 44,
               height: 44,
               decoration: BoxDecoration(color: Lume.accentSoft, borderRadius: BorderRadius.circular(12)),
-              child: const Icon(Icons.folder_rounded, color: Lume.accent),
+              child: Icon(Icons.folder_rounded, color: Lume.accent),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -199,7 +199,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const SizedBox(height: 3),
                   Text(
                     lib.scanning ? 'Procurando livros…' : (exists ? '$n ${n == 1 ? 'livro' : 'livros'} (com subpastas)' : 'Pasta não encontrada ou sem acesso'),
-                    style: Lume.s(13.5, color: exists ? Lume.accent : const Color(0xFFB3412E), w: 600),
+                    style: Lume.s(13.5, color: exists ? Lume.accent : Lume.danger, w: 600),
                   ),
                 ],
               ),
@@ -208,7 +208,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               key: ValueKey('remove-$f'),
               tooltip: 'Remover pasta',
               onPressed: () => _removeFolder(f),
-              icon: const Icon(Icons.remove_circle_outline_rounded, color: Lume.muted),
+              icon: Icon(Icons.remove_circle_outline_rounded, color: Lume.muted),
             ),
           ],
         ),
@@ -248,11 +248,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             key: const ValueKey('folders-note'),
             margin: const EdgeInsets.fromLTRB(16, 4, 16, 16),
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: const Color(0xFFF1E8D8), borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(color: Lume.chip, borderRadius: BorderRadius.circular(12)),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.info_outline_rounded, size: 18, color: Lume.muted),
+                Icon(Icons.info_outline_rounded, size: 18, color: Lume.muted),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -294,7 +294,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   children: [
                     SwitchListTile(
                       contentPadding: const EdgeInsets.fromLTRB(16, 4, 12, 4),
-                      secondary: const Icon(Icons.autorenew_rounded, color: Lume.ink),
+                      secondary: Icon(Icons.autorenew_rounded, color: Lume.ink),
                       title: const Text('Atualizar automaticamente'),
                       subtitle: const Text('Livros novos colocados nas pastas aparecem sozinhos na biblioteca'),
                       value: Store.watchFolder,
@@ -306,7 +306,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     const Divider(),
                     ListTile(
                       contentPadding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-                      leading: const Icon(Icons.manage_search_rounded, color: Lume.ink),
+                      leading: Icon(Icons.manage_search_rounded, color: Lume.ink),
                       title: const Text('Atualizar pastas'),
                       subtitle: const Text('Lê todas as pastas e subpastas de novo e pega os livros novos'),
                       onTap: () => rescanFolder(context, lib),
@@ -315,14 +315,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ListTile(
                       key: const ValueKey('hidden-books'),
                       contentPadding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-                      leading: const Icon(Icons.visibility_off_outlined, color: Lume.ink),
+                      leading: Icon(Icons.visibility_off_outlined, color: Lume.ink),
                       title: const Text('Livros ocultos'),
                       subtitle: Text(
                         hidden == 0
                             ? 'Nenhum livro tirado da biblioteca'
                             : '$hidden ${hidden == 1 ? 'livro tirado' : 'livros tirados'} só da biblioteca · toque para mostrar de novo',
                       ),
-                      trailing: const Icon(Icons.chevron_right_rounded, color: Lume.muted),
+                      trailing: Icon(Icons.chevron_right_rounded, color: Lume.muted),
                       onTap: () async {
                         await Navigator.of(context).push(MaterialPageRoute(builder: (_) => HiddenBooksScreen(library: lib)));
                         if (mounted) setState(() {});
@@ -339,6 +339,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   style: Lume.s(13.5, color: Lume.muted),
                 ),
               ),
+              _label('Cores do aplicativo'),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SegmentedButton<AppColors>(
+                        key: const ValueKey('app-colors'),
+                        showSelectedIcon: false,
+                        segments: [
+                          for (final c in AppColors.values) ButtonSegment(value: c, label: Text(c.label, maxLines: 1, overflow: TextOverflow.ellipsis)),
+                        ],
+                        selected: {Store.appColors},
+                        onSelectionChanged: (v) => setState(() => Store.appColors = v.first),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Normal: papel creme e terracota. Preto e branco: toda a interface e as páginas do leitor em tons de cinza (claro ou escuro).',
+                        style: Lume.s(13.5, color: Lume.muted),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
               _label('Leitura'),
               Card(
                 child: Padding(
@@ -348,7 +373,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     children: [
                       Container(
                         margin: const EdgeInsets.only(top: 14),
-                        padding: EdgeInsets.symmetric(horizontal: rs.hPad * .6, vertical: 14),
+                        padding: EdgeInsets.symmetric(horizontal: rs.hPadFor(MediaQuery.sizeOf(context).width - 64), vertical: 14),
                         decoration: BoxDecoration(
                           color: rs.theme.bg,
                           borderRadius: BorderRadius.circular(12),
@@ -387,19 +412,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ),
                     const Divider(),
-                    const ListTile(
+                    ListTile(
                       leading: Icon(Icons.menu_book_outlined, color: Lume.ink),
                       title: Text('Livros de exemplo'),
                       subtitle: Text('Machado de Assis e José de Alencar, em domínio público, via Project Gutenberg (gutenberg.org)'),
                     ),
                     const Divider(),
-                    const ListTile(
+                    ListTile(
                       leading: Icon(Icons.picture_as_pdf_outlined, color: Lume.ink),
                       title: Text('PDF'),
                       subtitle: Text('Páginas desenhadas pelo PDFium (pacote pdfrx, licença MIT), direto no celular'),
                     ),
                     const Divider(),
-                    const ListTile(
+                    ListTile(
                       leading: Icon(Icons.font_download_outlined, color: Lume.ink),
                       title: Text('Fontes'),
                       subtitle: Text('Literata, Lora e Source Sans 3 · SIL Open Font License'),

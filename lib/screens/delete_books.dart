@@ -75,7 +75,7 @@ class DeleteBooksDialogState extends State<DeleteBooksDialog> {
 
     return AlertDialog(
       key: const ValueKey('delete-dialog'),
-      backgroundColor: const Color(0xFFFBF6EC),
+      backgroundColor: Lume.sheet,
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       title: Text('Apagar $what?', style: Lume.s(20, w: 650, family: Lume.serif, h: 1.25)),
       content: SingleChildScrollView(
@@ -94,17 +94,17 @@ class DeleteBooksDialogState extends State<DeleteBooksDialog> {
               Icons.delete_outline_rounded,
               'Apagar o arquivo também',
               'Some do celular, junto com o progresso, os destaques e as notas. Não dá para desfazer.',
-              color: const Color(0xFFB3412E),
+              color: Lume.danger,
             ),
             if (outside > 0)
               Container(
                 key: const ValueKey('delete-note'),
                 padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: const Color(0xFFF1E8D8), borderRadius: BorderRadius.circular(10)),
+                decoration: BoxDecoration(color: Lume.chip, borderRadius: BorderRadius.circular(10)),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.info_outline_rounded, size: 18, color: Lume.muted),
+                    Icon(Icons.info_outline_rounded, size: 18, color: Lume.muted),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -123,7 +123,7 @@ class DeleteBooksDialogState extends State<DeleteBooksDialog> {
         TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
         FilledButton(
           key: const ValueKey('delete-confirm'),
-          style: FilledButton.styleFrom(backgroundColor: choice == DeleteChoice.file ? const Color(0xFFB3412E) : Lume.accent),
+          style: FilledButton.styleFrom(backgroundColor: choice == DeleteChoice.file ? Lume.danger : Lume.accent),
           onPressed: () => Navigator.pop(context, choice),
           child: Text(choice == DeleteChoice.file ? 'Apagar arquivo${n == 1 ? '' : 's'}' : 'Tirar da biblioteca'),
         ),
@@ -169,7 +169,7 @@ Future<bool> deleteBooks(BuildContext context, Library lib, List<LibraryBook> bo
       context: context,
       builder: (context) => AlertDialog(
         key: const ValueKey('delete-failed'),
-        backgroundColor: const Color(0xFFFBF6EC),
+        backgroundColor: Lume.sheet,
         title: Text(
           r.failed.length == 1 ? 'Não foi possível apagar 1 arquivo' : 'Não foi possível apagar ${r.failed.length} arquivos',
           style: Lume.s(19, w: 650, family: Lume.serif),
@@ -249,7 +249,7 @@ class _HiddenBooksScreenState extends State<HiddenBooksScreen> {
                         ListTile(
                           key: ValueKey('hidden-${h.id}'),
                           contentPadding: const EdgeInsets.fromLTRB(16, 6, 8, 6),
-                          leading: const Icon(Icons.visibility_off_outlined, color: Lume.muted),
+                          leading: Icon(Icons.visibility_off_outlined, color: Lume.muted),
                           title: Text(
                             h.title,
                             maxLines: 2,

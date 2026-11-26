@@ -102,7 +102,7 @@ class ImportSheetState extends State<ImportSheet> {
 
   Widget _dest() => Row(
     children: [
-      const Icon(Icons.folder_rounded, color: Lume.accent, size: 20),
+      Icon(Icons.folder_rounded, color: Lume.accent, size: 20),
       const SizedBox(width: 8),
       Expanded(
         child: Text(
@@ -182,8 +182,8 @@ class ImportSheetState extends State<ImportSheet> {
             Container(
               width: 40,
               height: 40,
-              decoration: const BoxDecoration(color: Lume.accentSoft, shape: BoxShape.circle),
-              child: const Icon(Icons.check_rounded, color: Lume.accent),
+              decoration: BoxDecoration(color: Lume.accentSoft, shape: BoxShape.circle),
+              child: Icon(Icons.check_rounded, color: Lume.accent),
             ),
             const SizedBox(width: 14),
             Expanded(

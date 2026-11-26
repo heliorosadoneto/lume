@@ -58,6 +58,7 @@ Future<void> settle(WidgetTester t, {int rounds = 3}) async {
 Future<void> prefs({String theme = 'sepia', double size = 18}) async {
   SharedPreferences.setMockInitialValues({'seeded': true, 'settings': '{"t":"$theme","f":"literata","s":$size,"l":1.55,"m":1,"j":false,"p":false}'});
   await Store.init();
+  Store.settings = Store.settings..fullscreen = false;
 }
 
 /// Abre o .md no leitor já rolado até o bloco [at].

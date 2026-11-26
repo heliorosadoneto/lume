@@ -81,6 +81,7 @@ void main() {
     test('Library.importFiles: os livros aparecem na biblioteca na hora', () async {
       SharedPreferences.setMockInitialValues({'seeded': true});
       await Store.init();
+      Store.settings = Store.settings..fullscreen = false;
       final lib = Library(dest, coversDir: Directory(p.join(tmp().path, 'capas')), renderPdfCovers: false);
       await lib.load(useIsolate: false);
       expect(lib.books, isEmpty);

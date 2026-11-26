@@ -144,6 +144,7 @@ void main() {
     test('a pasta do Lume lista o .md e Importar copia', () async {
       SharedPreferences.setMockInitialValues({'seeded': true});
       await Store.init();
+      Store.settings = Store.settings..fullscreen = false;
       final tmp = Directory.systemTemp.createTempSync('lumemd');
       final dir = Directory(p.join(tmp.path, 'Lume'))..createSync();
       Directory(p.join(dir.path, 'notas')).createSync();

@@ -1,5 +1,14 @@
 # Histórico de mudanças
 
+## 1.4.0 — 26 de novembro de 2026
+
+- **Virar página de verdade.** O modo “Virar página” não passava de uma rolagem com duas faixas invisíveis nas bordas: não deslizava, cortava linhas no meio e não mostrava em que página você estava. Agora o livro é dividido em páginas do tamanho da tela (o texto é medido com a mesma fonte, tamanho e largura usados para desenhar), sem cortar linha e sem deixar uma linha sozinha no começo ou no fim da página. Toque no terço direito da tela avança, no esquerdo volta, e deslizar para o lado também vira a página. A barra de baixo mostra “Página x de y”. A posição (inclusive o ponto exato dentro de um parágrafo longo) é salva e volta ao reabrir; mudar a fonte, o tamanho, a largura ou o tema refaz as páginas no mesmo trecho. Vale para EPUB, TXT, Markdown e o modo texto do PDF.
+- **Texto na largura toda.** O padrão passou a usar a tela inteira, com só 10 dp de margem em cada lado. Em Ajustes (e no painel Aparência do leitor) a “Largura do texto” vai de 70% a 100%, vale na hora, em rolagem e em páginas, e fica salva. Substitui as margens estreita/média/larga.
+- **Tela cheia ao ler.** Com a opção “Tela cheia ao ler” (ligada por padrão, em Ajustes e em Aparência), o leitor esconde as barras de status e de navegação do Android e os botões. Um toque curto no centro da tela mostra e esconde os botões (por cima, sem mexer no texto); no modo página, as laterais continuam virando a página. Ao sair do leitor as barras do Android voltam. Também vale para o PDF em página original. Uma dica aparece na primeira vez.
+- **Cores do aplicativo.** Em Ajustes → Cores do aplicativo: **Normal** (papel creme e terracota), **P&B claro** e **P&B escuro**. Toda a interface e as páginas do leitor (branco, sépia, verde e preto viram tons de cinza) mudam na hora e a escolha fica salva.
+- Um toque simples no texto não deixa mais a alça do cursor na tela.
+- Testes novos: divisão em páginas (sem Flutter e com livros de verdade, checando que o que foi medido cabe na página desenhada), toque e deslize, largura, tela cheia (texto e PDF, barras do Android) e cores.
+
 ## 1.3.0 — 13 de novembro de 2026
 
 - Pasta do Lume criada na primeira abertura: Documentos/Lume ou, se o Android não deixar, Android/data/com.helio.lume/files/Livros (com explicação e botão “Usar Documentos/Lume”). Caminho em Ajustes e no topo da biblioteca. Livros importados antes são movidos para ela.

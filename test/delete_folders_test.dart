@@ -16,6 +16,7 @@ late Directory base, lume, a, b, covers, texto;
 Future<void> fresh([Map<String, Object> prefs = const {}]) async {
   SharedPreferences.setMockInitialValues({'seeded': true, ...prefs});
   await Store.init();
+  Store.settings = Store.settings..fullscreen = false;
 }
 
 void put(Directory d, String from, [String? name]) {

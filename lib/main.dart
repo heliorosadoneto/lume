@@ -41,15 +41,44 @@ Future<void> main() async {
   library.watch();
 }
 
-class LumeApp extends StatelessWidget {
+class LumeApp extends StatefulWidget {
   const LumeApp({super.key, required this.library});
   final Library library;
+
+  @override
+  State<LumeApp> createState() => _LumeAppState();
+}
+
+class _LumeAppState extends State<LumeApp> {
+  Library get library => widget.library;
+
+  @override
+  void initState() {
+    super.initState();
+    Lume.colors.addListener(_colors);
+  }
+
+  @override
+  void dispose() {
+    Lume.colors.removeListener(_colors);
+    super.dispose();
+  }
+
+  /// Troca de cores ao vivo: o tema muda e todas as telas se refazem.
+  void _colors() {
+    setState(() {});
+    WidgetsBinding.instance.addPostFrameCallback((_) => rebuildAllElements());
+  }
 
   @override
   Widget build(BuildContext context) => MaterialApp(
     title: 'Lume',
     debugShowCheckedModeBanner: false,
     theme: Lume.theme(),
+    builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(
+      value: Lume.darkUi ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+      child: child!,
+    ),
     locale: const Locale('pt', 'BR'),
     supportedLocales: const [Locale('pt', 'BR')],
     localizationsDelegates: GlobalMaterialLocalizations.delegates,

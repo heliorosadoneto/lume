@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:pdfrx/pdfrx.dart';
 
 import '../epub.dart';
+import '../fullscreen.dart';
 import '../pdf_analysis.dart';
 import '../store.dart';
 import '../theme.dart';
@@ -56,9 +57,31 @@ class PdfReaderScreenState extends State<PdfReaderScreen> {
 
   DateTime _now() => widget.now?.call() ?? DateTime.now();
 
+  // ---------- tela cheia ----------
+  /// Com "Tela cheia ao ler", barras do Android e botões começam escondidos;
+  /// um toque no centro da página os mostra (por cima, sem mexer na página).
+  late bool _chrome = !s.fullscreen;
+  double _safeTop = 0, _safeBottom = 0;
+  final _toggle = TapDebounce();
+  bool get _showBars => !s.fullscreen || _chrome;
+
+  void _tapped(double fx) {
+    if (!s.fullscreen) return;
+    // no modo página, as bordas viram a página; no contínuo, qualquer toque vale
+    if (paged && (fx < .2 || fx > .8)) return;
+    _toggle(() {
+      if (!mounted) return;
+      setState(() => _chrome = !_chrome);
+      applySystemUi(immersive: !_showBars);
+    });
+  }
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) applySystemUi(immersive: !_showBars);
+    });
     page = (Store.pos(meta.id)?.block ?? 0) + 1;
     pageCount = Store.pages(meta.id);
     pager = PageController(initialPage: page - 1);
@@ -89,6 +112,8 @@ class PdfReaderScreenState extends State<PdfReaderScreen> {
 
   @override
   void dispose() {
+    _toggle.dispose();
+    applySystemUi(immersive: false);
     viewer.removeListener(_onViewerZoom);
     zoomer.dispose();
     pager.dispose();
@@ -263,29 +288,55 @@ class PdfReaderScreenState extends State<PdfReaderScreen> {
   @override
   Widget build(BuildContext context) {
     final t = s.theme;
+    final mq = MediaQuery.of(context);
+    _safeTop = _safeTop < mq.viewPadding.top ? mq.viewPadding.top : _safeTop;
+    _safeBottom = _safeBottom < mq.viewPadding.bottom ? mq.viewPadding.bottom : _safeBottom;
+    Widget reading() => Stack(children: [
+      Positioned.fill(child: ClipRect(child: paged ? _pagedView(t) : _scrollView(t))),
+      if (zoom > 1.05)
+        Positioned(
+          top: 10,
+          left: 0,
+          right: 0,
+          child: Center(child: _ZoomPill(zoom: zoom, dark: t.dark, onReset: resetZoom)),
+        ),
+    ]);
+    final Widget body;
+    if (!s.fullscreen) {
+      body = SafeArea(
+        child: Column(children: [
+          _topBar(t),
+          Expanded(child: reading()),
+          _bottomBar(t),
+        ]),
+      );
+    } else {
+      body = Stack(children: [
+        Positioned.fill(
+          child: Padding(
+            padding: EdgeInsets.only(top: _safeTop, bottom: _safeBottom),
+            child: TapSpot(onTap: _tapped, child: reading()),
+          ),
+        ),
+        if (_chrome) ...[
+          Positioned(
+            left: 0,
+            right: 0,
+            top: 0,
+            child: Material(color: t.bg, elevation: 2, child: Padding(padding: EdgeInsets.only(top: _safeTop), child: _topBar(t))),
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Material(color: t.bg, elevation: 2, child: Padding(padding: EdgeInsets.only(bottom: _safeBottom), child: _bottomBar(t))),
+          ),
+        ],
+      ]);
+    }
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: t.dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
-      child: Scaffold(
-        backgroundColor: t.bg,
-        body: SafeArea(
-          child: Column(children: [
-            _topBar(t),
-            Expanded(
-              child: Stack(children: [
-                Positioned.fill(child: ClipRect(child: paged ? _pagedView(t) : _scrollView(t))),
-                if (zoom > 1.05)
-                  Positioned(
-                    top: 10,
-                    left: 0,
-                    right: 0,
-                    child: Center(child: _ZoomPill(zoom: zoom, dark: t.dark, onReset: resetZoom)),
-                  ),
-              ]),
-            ),
-            _bottomBar(t),
-          ]),
-        ),
-      ),
+      child: Scaffold(backgroundColor: t.bg, body: body),
     );
   }
 
@@ -805,7 +856,7 @@ class _PdfContentsSheetState extends State<PdfContentsSheet> {
                             padding: EdgeInsets.only(left: 24.0 + depth * 16, right: 20),
                             child: Row(children: [
                               if (here)
-                                const Padding(padding: EdgeInsets.only(right: 10), child: Icon(Icons.circle, size: 8, color: Lume.accent)),
+                                Padding(padding: EdgeInsets.only(right: 10), child: Icon(Icons.circle, size: 8, color: Lume.accent)),
                               Expanded(
                                 child: Text(title,
                                     maxLines: 1,
@@ -828,12 +879,12 @@ class _PdfContentsSheetState extends State<PdfContentsSheet> {
                         final b = bms[i];
                         return ListTile(
                           contentPadding: const EdgeInsets.fromLTRB(24, 2, 12, 2),
-                          leading: const Icon(Icons.bookmark_rounded, color: Lume.accent),
+                          leading: Icon(Icons.bookmark_rounded, color: Lume.accent),
                           title: Text('Página ${b.block + 1}'),
                           subtitle: Text(b.excerpt.isEmpty ? fmtDate(b.created) : b.excerpt, maxLines: 2, overflow: TextOverflow.ellipsis),
                           trailing: IconButton(
                             tooltip: 'Remover marcador',
-                            icon: const Icon(Icons.close_rounded, color: Lume.muted),
+                            icon: Icon(Icons.close_rounded, color: Lume.muted),
                             onPressed: () {
                               setState(() => bms.remove(b));
                               final all = widget.bookmarks..removeWhere((x) => x.block == b.block);

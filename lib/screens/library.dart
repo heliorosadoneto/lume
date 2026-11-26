@@ -159,7 +159,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     child: SectionLabel(
                       'Biblioteca',
                       trailing: lib.scanning
-                          ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Lume.accent))
+                          ? SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Lume.accent))
                           : Text('${lib.books.length} ${lib.books.length == 1 ? 'livro' : 'livros'}', style: Lume.s(14, color: Lume.muted)),
                     ),
                   ),
@@ -249,7 +249,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
           padding: const EdgeInsets.only(right: 12, left: 4),
           child: FilledButton.icon(
             key: const ValueKey('select-delete'),
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFB3412E)),
+            style: FilledButton.styleFrom(backgroundColor: Lume.danger),
             onPressed: _deleteSelected,
             icon: const Icon(Icons.delete_outline_rounded, size: 20),
             label: const Text('Apagar'),
@@ -273,7 +273,7 @@ class _FolderBanner extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
       child: Material(
-        color: const Color(0xFFF1E8D8),
+        color: Lume.chip,
         borderRadius: BorderRadius.circular(14),
         child: InkWell(
           borderRadius: BorderRadius.circular(14),
@@ -282,7 +282,7 @@ class _FolderBanner extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(14, 10, 12, 10),
             child: Row(
               children: [
-                const Icon(Icons.folder_rounded, color: Lume.accent, size: 22),
+                Icon(Icons.folder_rounded, color: Lume.accent, size: 22),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
@@ -305,7 +305,7 @@ class _FolderBanner extends StatelessWidget {
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right_rounded, color: Lume.muted),
+                Icon(Icons.chevron_right_rounded, color: Lume.muted),
               ],
             ),
           ),
@@ -358,7 +358,7 @@ class _ContinueCard extends StatelessWidget {
                       const SizedBox(height: 10),
                       Row(
                         children: [
-                          const Icon(Icons.play_arrow_rounded, size: 18, color: Lume.ink),
+                          Icon(Icons.play_arrow_rounded, size: 18, color: Lume.ink),
                           const SizedBox(width: 2),
                           Text('Continuar', style: Lume.s(14, w: 650)),
                         ],
@@ -459,7 +459,7 @@ class _BookTile extends StatelessWidget {
               PopupMenuButton<String>(
                 key: ValueKey('menu-${book.meta.id}'),
                 tooltip: 'Mais opções',
-                icon: const Icon(Icons.more_vert_rounded, color: Lume.muted),
+                icon: Icon(Icons.more_vert_rounded, color: Lume.muted),
                 color: Lume.card,
                 onSelected: onMenu,
                 itemBuilder: (_) => [
@@ -471,10 +471,10 @@ class _BookTile extends StatelessWidget {
                     value: 'select',
                     child: ListTile(leading: Icon(Icons.check_circle_outline_rounded), title: Text('Selecionar')),
                   ),
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'delete',
                     child: ListTile(
-                      leading: Icon(Icons.delete_outline_rounded, color: Color(0xFFB3412E)),
+                      leading: Icon(Icons.delete_outline_rounded, color: Lume.danger),
                       title: Text('Apagar…'),
                     ),
                   ),
@@ -529,10 +529,10 @@ class FormatBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(5),
-        border: Border.all(color: pdf ? const Color(0xFFC9A78F) : Lume.line),
-        color: pdf ? const Color(0xFFF6E9DF) : null,
+        border: Border.all(color: pdf ? Lume.tintLine : Lume.line),
+        color: pdf ? Lume.tint : null,
       ),
-      child: Text(label, style: Lume.s(11, w: 700, ls: .6, color: pdf ? const Color(0xFF8F4A2C) : Lume.muted)),
+      child: Text(label, style: Lume.s(11, w: 700, ls: .6, color: pdf ? Lume.tintInk : Lume.muted)),
     );
   }
 }

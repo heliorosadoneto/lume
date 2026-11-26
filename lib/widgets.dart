@@ -32,13 +32,13 @@ class BookCover extends StatelessWidget {
       height: h,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(radius),
-        boxShadow: const [BoxShadow(color: Color(0x262B2622), blurRadius: 10, offset: Offset(0, 4))],
+        boxShadow: [BoxShadow(color: Lume.ink.withValues(alpha: .15), blurRadius: 10, offset: Offset(0, 4))],
       ),
       clipBehavior: Clip.antiAlias,
       child: cover != null
           ? Image.memory(cover!, fit: BoxFit.cover, gaplessPlayback: true, cacheWidth: (width * 3).round())
           : Container(
-              color: const Color(0xFF6E4A35),
+              color: Lume.coverBg,
               padding: EdgeInsets.all(width * 0.1),
               alignment: Alignment.center,
               child: Text(
@@ -46,7 +46,7 @@ class BookCover extends StatelessWidget {
                 textAlign: TextAlign.center,
                 maxLines: 5,
                 overflow: TextOverflow.ellipsis,
-                style: Lume.s(width * 0.13, w: 600, color: const Color(0xFFF6E7CF), family: Lume.serif, h: 1.2),
+                style: Lume.s(width * 0.13, w: 600, color: Lume.coverInk, family: Lume.serif, h: 1.2),
               ),
             ),
     );
@@ -63,7 +63,7 @@ class LumeMark extends StatelessWidget {
     height: size,
     decoration: BoxDecoration(
       borderRadius: BorderRadius.circular(size * .3),
-      boxShadow: [BoxShadow(color: const Color(0x33B85C38), blurRadius: size * .25, offset: Offset(0, size * .06))],
+      boxShadow: [BoxShadow(color: Lume.accent.withValues(alpha: .2), blurRadius: size * .25, offset: Offset(0, size * .06))],
     ),
     child: Image.asset('assets/logo/lume.png', width: size, height: size, filterQuality: FilterQuality.medium),
   );
@@ -89,12 +89,12 @@ class SectionLabel extends StatelessWidget {
 }
 
 class ThinProgress extends StatelessWidget {
-  const ThinProgress(this.value, {super.key, this.color = Lume.accent, this.track = Lume.line, this.height = 4});
+  const ThinProgress(this.value, {super.key, this.color, this.track, this.height = 4});
   final double value, height;
-  final Color color, track;
+  final Color? color, track;
   @override
   Widget build(BuildContext context) => ClipRRect(
     borderRadius: BorderRadius.circular(height),
-    child: LinearProgressIndicator(value: value, minHeight: height, color: color, backgroundColor: track),
+    child: LinearProgressIndicator(value: value, minHeight: height, color: color ?? Lume.accent, backgroundColor: track ?? Lume.line),
   );
 }

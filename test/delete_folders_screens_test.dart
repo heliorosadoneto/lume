@@ -65,6 +65,7 @@ late Directory storage, lume, download, estudos;
 Future<Library> phoneLibrary(WidgetTester t, {bool folders = true}) async {
   SharedPreferences.setMockInitialValues({'seeded': true});
   await Store.init();
+  Store.settings = Store.settings..fullscreen = false;
   final base = Directory.systemTemp.createTempSync('lumev5');
   storage = Directory(p.join(base.path, 'storage', 'emulated', '0'));
   lume = Directory(p.join(storage.path, 'Documents', 'Lume'))..createSync(recursive: true);

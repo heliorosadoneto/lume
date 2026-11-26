@@ -75,6 +75,7 @@ Future<void> resetPrefs() async {
         '[{"b":1,"x":"O conselheiro Vale morreu ás 7 horas da noite de 25 de abril de 1859.","d":${now.millisecondsSinceEpoch}},{"b":41,"x":"","d":${now.millisecondsSinceEpoch}}]',
   });
   await Store.init();
+  Store.settings = Store.settings..fullscreen = false;
 }
 
 void main() {
@@ -205,7 +206,7 @@ void main() {
 
   testWidgets('Leitor de PDF no tema preto', (t) async {
     phone(t);
-    Store.settings = ReaderSettings(theme: PageTheme.preto);
+    Store.settings = ReaderSettings(fullscreen: false, theme: PageTheme.preto);
     await t.pumpWidget(wrap(PdfReaderScreen(meta: helena, now: () => now)));
     await render(t);
     await snap('19_pdf_leitor_preto');
@@ -213,7 +214,7 @@ void main() {
 
   testWidgets('Página a página (branco), deslizar avança e salva', (t) async {
     phone(t);
-    Store.settings = ReaderSettings(theme: PageTheme.branco);
+    Store.settings = ReaderSettings(fullscreen: false, theme: PageTheme.branco);
     Store.pdfPaged = true;
     Store.savePos(helena.id, ReadingPos(1, 0, 0, now));
     await t.pumpWidget(wrap(PdfReaderScreen(meta: helena, now: () => now)));
@@ -228,6 +229,37 @@ void main() {
     await t.tap(find.byKey(const ValueKey('pdfpage1')));
     await render(t, rounds: 4);
     expect(st.page, 4);
+  });
+
+  testWidgets('PDF em tela cheia: botões escondidos, centro mostra, borda vira a página', (t) async {
+    phone(t);
+    final ui = <String>[];
+    t.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, (c) async {
+      if (c.method == 'SystemChrome.setEnabledSystemUIMode') ui.add(c.arguments as String);
+      return null;
+    });
+    addTearDown(() => t.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, null));
+    Store.settings = ReaderSettings(fullscreen: true, theme: PageTheme.branco);
+    Store.pdfPaged = true;
+    Store.savePos(helena.id, ReadingPos(1, 0, 0, now));
+    await t.pumpWidget(wrap(PdfReaderScreen(meta: helena, now: () => now)));
+    await render(t);
+    final st = t.state<PdfReaderScreenState>(find.byType(PdfReaderScreen));
+    expect(find.byTooltip('Aparência'), findsNothing);
+    expect(ui.last, 'SystemUiMode.immersiveSticky');
+    await t.tap(find.byKey(const ValueKey('pdfpage1')));
+    await render(t, rounds: 4);
+    expect(st.page, 3, reason: 'a borda direita vira a página');
+    expect(find.byTooltip('Aparência'), findsNothing, reason: 'e não mostra os botões');
+    final size = t.getSize(find.byType(Scaffold));
+    await t.tapAt(Offset(size.width / 2, size.height / 2));
+    await t.pump(const Duration(milliseconds: 400));
+    await render(t, rounds: 2);
+    expect(find.byTooltip('Aparência'), findsOneWidget);
+    expect(ui.last, 'SystemUiMode.edgeToEdge');
+    await snap('64_pdf_tela_cheia_botoes');
+    await t.pumpWidget(const SizedBox());
+    expect(ui.last, 'SystemUiMode.edgeToEdge');
   });
 
   testWidgets('Zoom com pinça na página', (t) async {

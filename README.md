@@ -19,7 +19,7 @@ Abra o livro, continue de onde parou, grife o que importa.</p>
 </p>
 
 <p align="center">
-  <a href="releases/Lume.apk"><strong>Baixar o APK</strong></a>
+  <a href="https://github.com/heliorosadoneto/lume/releases/latest"><strong>Baixar o APK (versão 1.4.0)</strong></a>
   · pacote <code>com.helio.lume</code>
   · interface em português do Brasil
 </p>
@@ -34,15 +34,35 @@ Na primeira abertura há livros de demonstração em domínio público (Machado 
 
 ## Download
 
-O APK de release fica neste repositório:
+A versão atual é a **1.4.0**. O APK de release fica neste repositório e na página de releases do GitHub:
 
-- [releases/Lume.apk](releases/Lume.apk)
+- [releases/Lume.apk](releases/Lume.apk) (1.4.0, para celulares de 64 bits, arm64)
+- [GitHub Releases: v1.4.0](https://github.com/heliorosadoneto/lume/releases/tag/v1.4.0), com as notas das versões 1.1.0 a 1.4.0
+- A soma de verificação SHA-256 está em [releases/SHA256SUMS](releases/SHA256SUMS).
 
 1. Baixe o arquivo no celular Android (7 ou mais novo).
 2. Abra-o e permita **instalar apps desta fonte** quando o sistema pedir.
 3. Abra o **Lume** e toque em **Importar** para copiar os seus livros para a pasta do Lume, ou use o **+** para adicionar outras pastas.
 
 A chave de assinatura fica só na máquina que gera o APK (`android/key.properties`) e **não** entra no git. Guarde um backup dessa chave: sem ela, uma atualização futura não pode ser instalada por cima desta.
+
+## Versão 1.4.0 — 26 de novembro de 2026: virar página de verdade, texto na largura toda, tela cheia e cores preto e branco
+
+**Virar página.** Antes, “Virar página” era só a rolagem com duas faixas invisíveis nas bordas: não deslizava, cortava linhas no meio da tela e não dizia em que página você estava. Agora o Lume divide o livro em páginas do tamanho da tela (ele mede o texto com a mesma fonte, tamanho e largura que usa para desenhar), sem cortar linha e sem deixar uma linha órfã no começo ou no fim. **Toque no terço direito** avança, **no esquerdo** volta, e **deslizar para o lado** também vira a página; embaixo aparece “Página 28 de 553”. A posição fica salva (até o ponto dentro de um parágrafo longo) e mudar fonte, tamanho, largura ou tema refaz as páginas no mesmo trecho. Vale para EPUB, TXT, Markdown e o modo texto do PDF. Livros grandes mostram “Preparando as páginas…” por alguns instantes na primeira vez.
+
+**Texto na largura toda.** O padrão agora usa a tela inteira, com só 10 dp de margem de cada lado. Em *Ajustes → Leitura* (e no painel *Aparência* do leitor) a **Largura do texto** vai de 70% a 100%, vale na hora e fica salva, tanto na rolagem quanto nas páginas.
+
+**Tela cheia ao ler.** Com **Tela cheia ao ler** ligada (padrão), as barras do Android e os botões do leitor somem. **Toque no centro da tela** para mostrar ou esconder os botões (eles aparecem por cima, o texto não se mexe); no modo página, as laterais continuam virando a página. Ao sair do leitor, as barras do Android voltam. Vale também para o PDF em página original.
+
+**Cores do aplicativo.** Em *Ajustes → Cores do aplicativo*: **Normal** (papel creme e terracota), **P&B claro** e **P&B escuro**. A interface toda e as páginas do leitor ficam em tons de cinza e mudam na hora.
+
+| Texto na largura toda | Virar página (1) | Virar página (2) |
+|---|---|---|
+| <img src="docs/screenshots/54_tela_cheia_botoes.png" width="230" alt="Leitor com o texto na largura toda e os botões"> | <img src="docs/screenshots/60_virar_pagina_1.png" width="230" alt="Modo virar página, primeira página"> | <img src="docs/screenshots/61_virar_pagina_2.png" width="230" alt="Modo virar página, depois de virar"> |
+
+| Largura e tela cheia em Ajustes | Tela cheia (lendo) | Preto e branco |
+|---|---|---|
+| <img src="docs/screenshots/63_ajustes_largura_tela_cheia.png" width="230" alt="Ajustes: largura do texto e tela cheia"> | <img src="docs/screenshots/62_tela_cheia_lendo.png" width="230" alt="Leitor em tela cheia"> | <img src="docs/screenshots/58_ajustes_preto_branco_escuro.png" width="230" alt="Ajustes em preto e branco escuro"> |
 
 ## Versão 1.3.0 — 13 de novembro de 2026: pasta do Lume, Importar, TXT, Markdown, apagar livros, várias pastas e ícone novo
 
@@ -111,8 +131,6 @@ A prévia do ícone e da splash é desenhada por `tool/make_icon_previews.py`; a
 
 ## Novidades da versão 1.1: PDF e pasta inteira
 
-> Ainda não está no APK de `releases/` (que é a 1.0). Estas telas são para aprovação.
-
 O Lume agora abre **PDF**. A página aparece como no original (o PDF é desenhado pelo PDFium, no próprio celular), com zoom com pinça, rolagem contínua ou página a página, barra de páginas, *Ir para a página*, sumário do PDF, marcadores e os mesmos temas do leitor de EPUB. Também dá para **escolher uma pasta**: o Lume procura PDFs e EPUBs nela e em todas as subpastas, mostra o progresso, ignora repetidos e lembra a pasta para você atualizar depois.
 
 | Biblioteca com PDFs | Só os PDFs | Botão + |
@@ -137,7 +155,7 @@ O Lume agora abre **PDF**. A página aparece como no original (o PDF é desenhad
 
 ### Modo texto para PDF
 
-Muitos PDFs (sobretudo os de livro feitos para papel carta ou A4) ficam com a letra miúda no celular. Quando o PDF tem texto selecionável, o Lume abre no **modo texto**: o texto do PDF é refeito em parágrafos (junta as linhas, desfaz a hifenização, tira cabeçalhos, rodapés e números de página e reconhece os títulos dos capítulos) e aparece no mesmo leitor dos EPUBs, com a fonte, o tamanho, o espaçamento, as margens e os temas que você escolher, além de destaques e notas. A posição é a mesma nos dois modos: trocar para a *Página original* (no painel de aparência) abre a página que você estava lendo, e vice-versa. O texto é extraído uma vez, fora da tela, com progresso, e fica guardado no aparelho. PDF escaneado (páginas que são só imagens) abre na página original, com um aviso. Na página original, as margens brancas são cortadas para o texto ocupar a largura da tela (dá para desligar).
+Muitos PDFs (sobretudo os de livro feitos para papel carta ou A4) ficam com a letra miúda no celular. Quando o PDF tem texto selecionável, o Lume abre no **modo texto**: o texto do PDF é refeito em parágrafos (junta as linhas, desfaz a hifenização, tira cabeçalhos, rodapés e números de página e reconhece os títulos dos capítulos) e aparece no mesmo leitor dos EPUBs, com a fonte, o tamanho, o espaçamento, a largura e os temas que você escolher, além de destaques e notas. A posição é a mesma nos dois modos: trocar para a *Página original* (no painel de aparência) abre a página que você estava lendo, e vice-versa. O texto é extraído uma vez, fora da tela, com progresso, e fica guardado no aparelho. PDF escaneado (páginas que são só imagens) abre na página original, com um aviso. Na página original, as margens brancas são cortadas para o texto ocupar a largura da tela (dá para desligar).
 
 | Modo texto | Aparência com a troca de modo |
 |---|---|
@@ -171,7 +189,7 @@ Há ainda o tema verde claro e a aba de marcadores (`docs/screenshots/06_leitor_
 - **Retomar a posição.** Cada livro guarda o parágrafo e o ponto da leitura. Ao reabrir, você volta exatamente dali.
 - **Marca-texto.** Selecione um trecho e escolha amarelo, laranja, rosa ou azul (como no Kindle). Dá para anexar uma nota, copiar ou remover. Destaques com nota ficam sublinhados. Tudo é salvo no celular.
 - **Caderno.** Lista os destaques (com filtro por cor) e os marcadores. Tocar num item salta para aquele trecho. Dá para editar a nota, mudar a cor ou apagar.
-- **Aparência.** Temas de página branco, sépia, verde claro e preto; fontes Literata, Lora ou Source Sans; tamanho, espaçamento, margens, alinhamento e modo de leitura (rolagem contínua ou virar página, tocando nas bordas).
+- **Aparência.** Temas de página branco, sépia, verde claro e preto; fontes Literata, Lora ou Source Sans; tamanho, espaçamento, largura do texto (70% a 100% da tela), alinhamento, modo de leitura (rolagem contínua ou virar página de verdade, tocando nos terços ou deslizando) e tela cheia ao ler. Em Ajustes, cores do aplicativo: normal ou preto e branco (claro ou escuro).
 - **Sumário.** Capítulos do livro, com o atual marcado e a porcentagem de cada um.
 - **Barra de progresso.** Mostra a % do livro e uma estimativa do tempo restante no capítulo.
 - **Leitor de PDF.** Página fiel ao original, sem internet. Rolagem contínua ou página a página (deslizar ou tocar nas bordas), zoom com pinça e toque duplo, barra para pular páginas, *Ir para a página*, sumário do próprio PDF, marcadores por página e a posição salva. Os temas sépia, verde claro e preto tingem a página (no preto ela se inverte); *Cores originais da página* desliga isso para fotos e mapas.

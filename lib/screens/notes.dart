@@ -81,7 +81,7 @@ class _NotesScreenState extends State<NotesScreen> {
                     return Card(
                       child: ListTile(
                         contentPadding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
-                        leading: const Icon(Icons.bookmark_rounded, color: Lume.accent),
+                        leading: Icon(Icons.bookmark_rounded, color: Lume.accent),
                         title: Text(_chapter(b.block)),
                         subtitle: Text(b.excerpt, maxLines: 2, overflow: TextOverflow.ellipsis),
                         trailing: Text(pct(book.progressAt(b.block)), style: Lume.s(13, color: Lume.muted)),
@@ -121,7 +121,7 @@ class _NotesScreenState extends State<NotesScreen> {
   Widget _empty(String t, String sub) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 24),
         child: Column(children: [
-          const Icon(Icons.format_quote_rounded, size: 44, color: Lume.line),
+          Icon(Icons.format_quote_rounded, size: 44, color: Lume.line),
           const SizedBox(height: 10),
           Text(t, style: Lume.s(18, w: 650, family: Lume.serif)),
           const SizedBox(height: 6),
@@ -150,9 +150,9 @@ class _NotesScreenState extends State<NotesScreen> {
                         const SizedBox(height: 10),
                         Container(
                           padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
-                          decoration: BoxDecoration(color: const Color(0xFFF1E8D8), borderRadius: BorderRadius.circular(10)),
+                          decoration: BoxDecoration(color: Lume.chip, borderRadius: BorderRadius.circular(10)),
                           child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                            const Icon(Icons.sticky_note_2_outlined, size: 18, color: Lume.accent),
+                            Icon(Icons.sticky_note_2_outlined, size: 18, color: Lume.accent),
                             const SizedBox(width: 8),
                             Expanded(child: Text(h.note, style: Lume.s(14.5, h: 1.35))),
                           ]),
@@ -163,7 +163,7 @@ class _NotesScreenState extends State<NotesScreen> {
                         Text('${fmtDate(h.created)} · ${pct(book.progressAt(h.block))}', style: Lume.s(13, color: Lume.muted)),
                         const Spacer(),
                         PopupMenuButton<String>(
-                          icon: const Icon(Icons.more_horiz_rounded, color: Lume.muted),
+                          icon: Icon(Icons.more_horiz_rounded, color: Lume.muted),
                           color: Lume.card,
                           onSelected: (v) async {
                             if (v == 'note') {

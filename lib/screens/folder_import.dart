@@ -30,7 +30,7 @@ class StorageAccessDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) => AlertDialog(
     backgroundColor: Lume.card,
-    icon: const Icon(Icons.folder_special_rounded, color: Lume.accent, size: 34),
+    icon: Icon(Icons.folder_special_rounded, color: Lume.accent, size: 34),
     title: Text('Ler a sua pasta de livros', style: Lume.s(21, w: 650, family: Lume.serif)),
     content: Column(
       mainAxisSize: MainAxisSize.min,
@@ -52,7 +52,7 @@ class StorageAccessDialog extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Padding(
+                Padding(
                   padding: EdgeInsets.only(top: 2),
                   child: Icon(Icons.check_rounded, size: 18, color: Lume.accent),
                 ),
@@ -129,7 +129,7 @@ class _FolderScanSheetState extends State<FolderScanSheet> {
 
   Widget _folderLine() => Row(
     children: [
-      const Icon(Icons.folder_rounded, color: Lume.accent, size: 20),
+      Icon(Icons.folder_rounded, color: Lume.accent, size: 20),
       const SizedBox(width: 8),
       Expanded(
         child: Text(
@@ -187,7 +187,7 @@ class _FolderScanSheetState extends State<FolderScanSheet> {
     final md = inFolder.where((b) => b.meta.format == BookFormat.md).length;
     final subs = inFolder.map((b) => b.subfolder).whereType<String>().toSet().length;
     final r = lib.report;
-    Widget row(IconData i, String label, String value, {Color color = Lume.ink}) => Padding(
+    Widget row(IconData i, String label, String value, {Color? color}) => Padding(
       padding: const EdgeInsets.symmetric(vertical: 7),
       child: Row(
         children: [
@@ -208,8 +208,8 @@ class _FolderScanSheetState extends State<FolderScanSheet> {
             Container(
               width: 40,
               height: 40,
-              decoration: const BoxDecoration(color: Lume.accentSoft, shape: BoxShape.circle),
-              child: const Icon(Icons.check_rounded, color: Lume.accent),
+              decoration: BoxDecoration(color: Lume.accentSoft, shape: BoxShape.circle),
+              child: Icon(Icons.check_rounded, color: Lume.accent),
             ),
             const SizedBox(width: 14),
             Expanded(

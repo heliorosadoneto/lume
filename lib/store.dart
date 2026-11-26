@@ -64,25 +64,45 @@ class ReaderSettings {
     this.font = BookFont.literata,
     this.size = 19,
     this.lineHeight = 1.6,
-    this.margin = 1,
+    this.widthPct = 100,
     this.justify = true,
     this.pageMode = false,
+    this.fullscreen = true,
   });
   PageTheme theme;
   BookFont font;
   double size, lineHeight;
-  int margin; // 0 estreita, 1 média, 2 larga
   bool justify, pageMode;
-  double get hPad => const [16.0, 26.0, 40.0][margin];
-  Map<String, dynamic> toJson() => {'t': theme.name, 'f': font.name, 's': size, 'l': lineHeight, 'm': margin, 'j': justify, 'p': pageMode};
+
+  /// Tela cheia ao ler: esconde as barras do Android e os botões do leitor
+  /// (um toque no centro da tela mostra e esconde de novo).
+  bool fullscreen;
+
+  /// Largura do texto, em % da tela (70–100). 100% usa a tela toda, menos
+  /// [minPad] de cada lado.
+  double widthPct;
+  static const minPad = 10.0;
+  static const minWidthPct = 70.0;
+
+  /// Margem de cada lado para uma tela de [screenWidth] pixels lógicos.
+  double hPadFor(double screenWidth) {
+    final avail = (screenWidth - 2 * minPad).clamp(0.0, double.infinity);
+    return minPad + avail * (1 - widthPct.clamp(minWidthPct, 100) / 100) / 2;
+  }
+
+  Map<String, dynamic> toJson() => {
+    't': theme.name, 'f': font.name, 's': size, 'l': lineHeight, 'w': widthPct, 'j': justify, 'p': pageMode, 'fs': fullscreen, //
+  };
   static ReaderSettings fromJson(Map<String, dynamic> j) => ReaderSettings(
     theme: PageTheme.values.byName(j['t'] as String),
     font: BookFont.values.byName(j['f'] as String),
     size: (j['s'] as num).toDouble(),
     lineHeight: (j['l'] as num).toDouble(),
-    margin: j['m'] as int,
+    // Até a 1.3 havia 3 margens fixas ('m'); agora o texto usa a tela toda por padrão.
+    widthPct: ((j['w'] as num?) ?? 100).toDouble().clamp(minWidthPct, 100.0),
     justify: j['j'] as bool,
     pageMode: j['p'] as bool,
+    fullscreen: (j['fs'] as bool?) ?? true,
   );
 }
 
@@ -95,7 +115,17 @@ class HiddenBook {
 
 class Store {
   static late SharedPreferences _p;
-  static Future<void> init() async => _p = await SharedPreferences.getInstance();
+  static Future<void> init() async {
+    _p = await SharedPreferences.getInstance();
+    Lume.colors.value = appColors;
+  }
+
+  /// Cores do aplicativo (Ajustes): normal ou preto e branco, claro ou escuro.
+  static AppColors get appColors => AppColors.values.asNameMap()[_p.getString('appcolors')] ?? AppColors.normal;
+  static set appColors(AppColors v) {
+    _p.setString('appcolors', v.name);
+    Lume.colors.value = v;
+  }
 
   static ReadingPos? pos(String book) {
     final s = _p.getString('pos:$book');
@@ -103,6 +133,17 @@ class Store {
   }
 
   static void savePos(String book, ReadingPos p) => _p.setString('pos:$book', jsonEncode(p.toJson()));
+
+  /// Modo página: posição exata (caractere dentro do bloco) da página aberta.
+  static int pageChar(String book, int block) {
+    final s = _p.getString('pc:$book');
+    if (s == null) return 0;
+    final i = s.indexOf(':');
+    if (i < 0 || int.tryParse(s.substring(0, i)) != block) return 0;
+    return int.tryParse(s.substring(i + 1)) ?? 0;
+  }
+
+  static void savePageChar(String book, int block, int char) => _p.setString('pc:$book', '$block:$char');
 
   static List<Highlight> highlights(String book) => [
     for (final j in jsonDecode(_p.getString('hl:$book') ?? '[]') as List) Highlight.fromJson(j as Map<String, dynamic>),
@@ -168,13 +209,17 @@ class Store {
   /// Apaga tudo o que o Lume guardou sobre um livro (posição, destaques,
   /// notas, marcadores, páginas e modo do PDF).
   static void forget(String book) {
-    for (final k in ['pos', 'hl', 'bm', 'pages', 'pdfmode']) {
+    for (final k in ['pos', 'hl', 'bm', 'pages', 'pdfmode', 'pc']) {
       _p.remove('$k:$book');
     }
   }
 
   static bool get watchFolder => _p.getBool('watch') ?? true;
   static set watchFolder(bool v) => _p.setBool('watch', v);
+
+  /// A dica "toque no centro" da tela cheia já foi mostrada.
+  static bool get fullscreenHint => _p.getBool('fsHint') ?? false;
+  static set fullscreenHint(bool v) => _p.setBool('fsHint', v);
 
   static bool get seeded => _p.getBool('seeded') ?? false;
   static set seeded(bool v) => _p.setBool('seeded', v);

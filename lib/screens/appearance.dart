@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import '../store.dart';
 import '../theme.dart';
 
-/// Ajustes de leitura: tema da página, fonte, tamanho, entrelinha, margens,
-/// alinhamento e modo (rolagem ou virar página).
+/// Ajustes de leitura: tema da página, fonte, tamanho, entrelinha, largura do
+/// texto, alinhamento, modo (rolagem ou virar página) e tela cheia.
 class AppearancePanel extends StatelessWidget {
   const AppearancePanel({super.key, required this.settings, required this.onChanged});
   final ReaderSettings settings;
@@ -72,17 +72,22 @@ class AppearancePanel extends StatelessWidget {
       ]),
       _label('Espaçamento entre linhas', s.lineHeight.toStringAsFixed(1).replaceAll('.', ',')),
       Slider(value: s.lineHeight, min: 1.3, max: 2.0, divisions: 7, onChanged: (v) => _set((s) => s.lineHeight = v)),
-      _label('Margens'),
-      SegmentedButton<int>(
-        showSelectedIcon: false,
-        segments: const [
-          ButtonSegment(value: 0, label: Text('Estreitas')),
-          ButtonSegment(value: 1, label: Text('Médias')),
-          ButtonSegment(value: 2, label: Text('Largas')),
-        ],
-        selected: {s.margin},
-        onSelectionChanged: (v) => _set((s) => s.margin = v.first),
-      ),
+      _label('Largura do texto', '${s.widthPct.round()}%'),
+      Row(children: [
+        Icon(Icons.format_align_center_rounded, size: 20, color: Lume.muted),
+        Expanded(
+          child: Slider(
+            key: const ValueKey('width-slider'),
+            value: s.widthPct.clamp(ReaderSettings.minWidthPct, 100),
+            min: ReaderSettings.minWidthPct,
+            max: 100,
+            divisions: 6,
+            onChanged: (v) => _set((s) => s.widthPct = v),
+          ),
+        ),
+        Icon(Icons.width_full_rounded, size: 20, color: Lume.muted),
+      ]),
+      Text('100% usa a tela toda, só com uma margem pequena nas laterais.', style: Lume.s(13.5, color: Lume.muted)),
       _label('Alinhamento'),
       SegmentedButton<bool>(
         showSelectedIcon: false,
@@ -106,9 +111,18 @@ class AppearancePanel extends StatelessWidget {
       if (s.pageMode)
         Padding(
           padding: const EdgeInsets.only(top: 8),
-          child: Text('Toque na borda direita ou esquerda da tela para avançar ou voltar.',
+          child: Text('Deslize para o lado ou toque no terço direito (avança) ou esquerdo (volta) da tela. O centro mostra e esconde os botões.',
               style: Lume.s(13.5, color: Lume.muted)),
         ),
+      const SizedBox(height: 6),
+      SwitchListTile(
+        key: const ValueKey('fullscreen-switch'),
+        contentPadding: EdgeInsets.zero,
+        title: Text('Tela cheia ao ler', style: Lume.s(15, w: 650)),
+        subtitle: Text('Esconde as barras do Android e os botões; toque no centro da tela para mostrá-los.', style: Lume.s(13.5, color: Lume.muted)),
+        value: s.fullscreen,
+        onChanged: (v) => _set((s) => s.fullscreen = v),
+      ),
     ]);
   }
 }
